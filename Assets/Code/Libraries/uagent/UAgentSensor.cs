@@ -87,6 +87,10 @@ public class UAgentSensor : MonoBehaviour {
 
 			for(int i = 0; i < uagentCore.uagentManager.agents.Count; i++) {
 				GameObject gb = uagentCore.uagentManager.agents[i];
+				if(gb == null) {
+					continue;
+                }
+
 				point = GetSightPoint(gb);
 				if (point != null) {
 					Renderer renderer = gb.GetComponent<Renderer>();
@@ -121,7 +125,6 @@ public class UAgentSensor : MonoBehaviour {
 				}
 			}
 
-			sightData.Print();
 			yield return new WaitForSeconds(sightUpdateDeltaTime);
 		}
 	}

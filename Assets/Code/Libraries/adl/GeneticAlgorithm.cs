@@ -35,8 +35,8 @@ public class GeneticAlgorithm {
 //------------------------------------------------------------------------------
 	public GeneticAlgorithm() {
 		populationCount = 0;
-		minMutationMatrix = Matrix<float>.Zeros(1, 1);
-		maxMutationMatrix = Matrix<float>.Zeros(1, 1);
+		minValueMatrix = Matrix<float>.Zeros(1, 1);
+		maxValueMatrix = Matrix<float>.Zeros(1, 1);
 		minCrossoverPercent = 0f;
 		maxCrossoverPercent = 0f;
 		mutationRate = 0f;

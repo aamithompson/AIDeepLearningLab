@@ -16,8 +16,10 @@ public class UAgentCore : MonoBehaviour {
 	// AGENT COMPONENT(s)
 	public UAgentGlobalManager uagentManager;
 	public UAgentSensor uagentSensor;
+	public UAgentData uagentData;
 
-	private bool hasSensor { get { return uagentSensor != null; } }
+	public bool hasSensor { get { return uagentSensor != null; } }
+	public bool hasData { get { return uagentData != null; } }
 
 	// DEBUG SETTING(s)
 	public bool debugEnabled = false;
@@ -46,8 +48,10 @@ public class UAgentCore : MonoBehaviour {
 		//attached, null if it doesn't."
 
 		uagentSensor = gameObject.GetComponent<UAgentSensor>();
+		uagentData = gameObject.GetComponent<UAgentData>();
 
-		if(hasSensor) { uagentSensor.uagentCore = this; }
+		if (hasSensor) { uagentSensor.uagentCore = this; }
+		if (hasData) { uagentData.uagentCore = this; }
 	}
 
 }
