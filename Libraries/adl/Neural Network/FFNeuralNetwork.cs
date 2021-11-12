@@ -2,7 +2,7 @@
 // Filename: FFNeuralNetwork.cs
 // Author: Aaron Thompson
 // Date Created: 12/9/2020
-// Last Updated: 8/5/2021
+// Last Updated: 11/11/2021
 //
 // Description:
 //==============================================================================
@@ -272,16 +272,28 @@ public class FFNeuralNetwork {
 		gradBiases.Insert(0, new Matrix<float>(B));
 
 		//delta_l
-		for(int i = z.Count - 2; i >= 0; i--) {
+		/*for(int i = z.Count - 2; i >= 0; i--) {
 			df = new Vector<float>(z[i]);
-			df.Operation(network[i+1][0].op.df);
-			delta = Matrix<float>.MatVecMul(weights[i+1], delta);
+			df.Operation(network[i+1][0].op.df); //network[i]?
+			delta = Matrix<float>.MatVecMul(weights[i+1], delta); //weights[i]?
 			delta = Vector<float>.HadamardProduct(delta, df);
 			A = new Matrix<float>(activation[i].GetData(), activation[i].length, 1);
 			B = new Matrix<float>(delta.GetData(), 1, delta.length);
 			gradWeights.Insert(0, Matrix<float>.MatMul(A, B));
 			gradBiases.Insert(0, new Matrix<float>(B));
+        }*/
+		for(int i = 2; i < depth; i++) {
+			df = new Vector<float>(z[z.Count - i]);
+			df.Operation(network[network.Count - i - 1][0].op.df);
+			delta = Matrix<float>.MatVecMul(weights[weights.Count - i + 1], delta);
+			delta = Vector<float>.HadamardProduct(delta, df);
+			A = new Matrix<float>(activation[activation.Count - i + 1].GetData(), activation[activation.Count - i + 1].length, 1);
+			B = new Matrix<float>(delta.GetData(), 1, delta.length);
+			gradWeights.Insert(0, Matrix<float>.MatMul(A, B));
+			gradBiases.Insert(0, new Matrix<float>(B));
         }
+
+		
 
 		List<Matrix<float>>[] grad = new List<Matrix<float>>[2];
 		grad[0] = gradWeights;
@@ -346,14 +358,25 @@ public class FFNeuralNetwork {
 //------------------------------------------------------------------------------
 	public class Neuron {
 			public Operation op;
+			public float value;
 
 			public Neuron(Operation op) {
 				this.op = op;
+				this.value = 0;
 			}
 
-			public float Activate(float v) {
-				return op.f(v);
+			public void Activate(float input) {
+				value = op.f(input);
+            }
+
+			public float Output(float input) {
+				Activate(input);
+				return value;
 			}
+
+			public float Derivative(float input) {
+				return op.df(input);
+            }
 	}
 }
 }// END namespace adl

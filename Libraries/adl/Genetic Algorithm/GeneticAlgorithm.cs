@@ -78,7 +78,10 @@ public class GeneticAlgorithm {
 
 		//EvaluatePopulation();
 	}
-
+	
+	//TODO TODO TODO TODO TODO TODO, FIX THIS!!!!
+	//TODO TODO TODO TODO TODO TODO, FIX THIS!!!!
+	//TODO TODO TODO TODO TODO TODO, FIX THIS!!!!
 	//FITNESS FUNCTION
 	public void Fit() {
 		for(int i = 0; i < populationCount; i++) {

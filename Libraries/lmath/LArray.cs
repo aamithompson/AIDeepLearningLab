@@ -60,7 +60,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 	//ELEMENT
 	public T GetElement(int index) {
 		if(index < 0) {
-			index = GetLength() - index;
+			index = GetLength() + index;
         }
 
 		return data[index];
@@ -72,7 +72,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 
 	public void SetElement(T e, int index){
 		if(index < 0) {
-			index = GetLength() - index;
+			index = GetLength() + index;
         }
 
 		data[index] = e;
@@ -282,7 +282,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 	protected int GetIndex(int[] indices) {
 		for(int i = 0; i < rank; i++) {
 			if(indices[i] < 0) {
-				indices[i] = shape[i] - indices[i];
+				indices[i] = shape[i] + indices[i];
             }
         }
 
