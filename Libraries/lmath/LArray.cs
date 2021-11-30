@@ -341,7 +341,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 	//ADDITION
 	//TODO : ERROR if shape != larray.shape
 	public void Add(LArray<T> larray) {
-		for(int i = 0; i < larray.GetLength(); i++){
+		for(int i = 0; i < larray.GetLength(); i++) {
 			double a = System.Convert.ToDouble(data[i]);
 			double b = System.Convert.ToDouble(larray.GetElement(i));
 			T e = (T)System.Convert.ChangeType(a + b, typeof(T));
@@ -351,7 +351,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 
 	//SCALAR MULTIPLICATION
 	public void Scale(T c) {
-		for(int i = 0; i < data.Length; i++){
+		for(int i = 0; i < data.Length; i++) {
 			double a = System.Convert.ToDouble(data[i]);
 			double b = System.Convert.ToDouble(c);
 			T e = (T)System.Convert.ChangeType(a * b, typeof(T));

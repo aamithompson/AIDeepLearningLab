@@ -2,7 +2,7 @@
 // Filename: Matrix.cs
 // Author: Aaron Thompson
 // Date Created: 5/31/2020
-// Last Updated: 6/11/2020
+// Last Updated: 11/29/2021
 //
 // Description:
 //==============================================================================
@@ -12,6 +12,8 @@ using UnityEngine;
 
 namespace lmath {
 public class Matrix<T> : LArray<T> where T : System.IConvertible {
+	public static int STRASSEN_MATRIX_SIZE = 16384;
+
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public Matrix() {
@@ -222,9 +224,62 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 					sum += a * b;
 				}
 				C[i, j] = (T)(System.Convert.ChangeType(sum , typeof(T)));
-				}
+			}
 		}
 
+		return C;
+	}
+	
+	//https://en.wikipedia.org/wiki/Strassen_algorithm
+	public static Matrix<T> StrassenMul(Matrix<T> A, Matrix<T> B) {
+		if(A.GetLength() < STRASSEN_MATRIX_SIZE && B.GetLength() < STRASSEN_MATRIX_SIZE) {
+			return MatMul(A, B);
+        }
+
+		int m = A.GetShape()[0];
+		int n = A.GetShape()[1];
+		int p = B.GetShape()[1];
+		int s = Mathf.Max(m, n, p);
+		s = (s % 2 == 1) ? s + 1 : s;
+		int sd2 = s/2;
+		Matrix<T> AP = Matrix<T>.Zeros(s, s);
+		Matrix<T> BP = Matrix<T>.Zeros(s, s);
+		AP.SetSlice(A.GetData(), new int[,] { { 0, m - 1 }, { 0, n - 1 } });
+		BP.SetSlice(B.GetData(), new int[,] { { 0, n - 1 }, { 0, p - 1 } });
+
+		Matrix<T> A11 = new Matrix<T>(AP.GetSlice(new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
+		Matrix<T> A12 = new Matrix<T>(AP.GetSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
+		Matrix<T> A21 = new Matrix<T>(AP.GetSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> A22 = new Matrix<T>(AP.GetSlice(new int[,] { { sd2, s - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> B11 = new Matrix<T>(BP.GetSlice(new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
+		Matrix<T> B12 = new Matrix<T>(BP.GetSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
+		Matrix<T> B21 = new Matrix<T>(BP.GetSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> B22 = new Matrix<T>(BP.GetSlice(new int[,] { { sd2, s - 1 }, { sd2, s - 1 } }), sd2, sd2);
+
+		Matrix<T> M1 = Matrix<T>.StrassenMul(A11 + A22, B11 + B22);
+		Matrix<T> M2 = Matrix<T>.StrassenMul(A21 + A22, B11);
+		Matrix<T> M3 = Matrix<T>.StrassenMul(A11, B12 - B22);
+		Matrix<T> M4 = Matrix<T>.StrassenMul(A22, B21 - B11);
+		Matrix<T> M5 = Matrix<T>.StrassenMul(A11 + A12, B22);
+		Matrix<T> M6 = Matrix<T>.StrassenMul(A21 - A11, B11 + B12);
+		Matrix<T> M7 = Matrix<T>.StrassenMul(A12 - A22, B21 + B22);
+
+		
+		Matrix<T> C11 = M1 + M4 - M5 + M7;
+		Matrix<T> C12 = M3 + M5;
+		Matrix<T> C21 = M2 + M4;
+		Matrix<T> C22 = M1 - M2 + M3 + M6;
+		Matrix<T> CP = Matrix<T>.Zeros(s, s);
+		CP.SetSlice(C11.GetData(), new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } });
+		CP.SetSlice(C12.GetData(), new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } });
+		CP.SetSlice(C21.GetData(), new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } });
+		CP.SetSlice(C22.GetData(), new int[,] { { sd2, s - 1 }, { sd2, s - 1 } });
+
+		if(m==n && n==p && p==s) {
+			return CP;
+        }
+
+		Matrix<T> C = new Matrix<T>(CP.GetSlice(new int[,] { { 0, m - 1 }, { 0, p - 1 } }), m, p);
 		return C;
 	}
 
