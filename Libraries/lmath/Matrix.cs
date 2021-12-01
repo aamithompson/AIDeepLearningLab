@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace lmath {
 public class Matrix<T> : LArray<T> where T : System.IConvertible {
-	public static int STRASSEN_MATRIX_SIZE = 16384;
+	public static int STRASSEN_MATRIX_SIZE = 4;
 
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
@@ -248,12 +248,12 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 		BP.SetSlice(B.GetData(), new int[,] { { 0, n - 1 }, { 0, p - 1 } });
 
 		Matrix<T> A11 = new Matrix<T>(AP.GetSlice(new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
-		Matrix<T> A12 = new Matrix<T>(AP.GetSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
-		Matrix<T> A21 = new Matrix<T>(AP.GetSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> A12 = new Matrix<T>(AP.GetSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> A21 = new Matrix<T>(AP.GetSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
 		Matrix<T> A22 = new Matrix<T>(AP.GetSlice(new int[,] { { sd2, s - 1 }, { sd2, s - 1 } }), sd2, sd2);
 		Matrix<T> B11 = new Matrix<T>(BP.GetSlice(new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
-		Matrix<T> B12 = new Matrix<T>(BP.GetSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
-		Matrix<T> B21 = new Matrix<T>(BP.GetSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> B12 = new Matrix<T>(BP.GetSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> B21 = new Matrix<T>(BP.GetSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
 		Matrix<T> B22 = new Matrix<T>(BP.GetSlice(new int[,] { { sd2, s - 1 }, { sd2, s - 1 } }), sd2, sd2);
 
 		Matrix<T> M1 = Matrix<T>.StrassenMul(A11 + A22, B11 + B22);
@@ -263,7 +263,6 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 		Matrix<T> M5 = Matrix<T>.StrassenMul(A11 + A12, B22);
 		Matrix<T> M6 = Matrix<T>.StrassenMul(A21 - A11, B11 + B12);
 		Matrix<T> M7 = Matrix<T>.StrassenMul(A12 - A22, B21 + B22);
-
 		
 		Matrix<T> C11 = M1 + M4 - M5 + M7;
 		Matrix<T> C12 = M3 + M5;
@@ -271,8 +270,8 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 		Matrix<T> C22 = M1 - M2 + M3 + M6;
 		Matrix<T> CP = Matrix<T>.Zeros(s, s);
 		CP.SetSlice(C11.GetData(), new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } });
-		CP.SetSlice(C12.GetData(), new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } });
-		CP.SetSlice(C21.GetData(), new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } });
+		CP.SetSlice(C12.GetData(), new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } });
+		CP.SetSlice(C21.GetData(), new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } });
 		CP.SetSlice(C22.GetData(), new int[,] { { sd2, s - 1 }, { sd2, s - 1 } });
 
 		if(m==n && n==p && p==s) {
