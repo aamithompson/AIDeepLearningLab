@@ -19,7 +19,7 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public Vector() {
-		data = new T[0];
+		data = new double[0];
 		shape = new int[1] { 0 };
 	}
 	
@@ -29,7 +29,7 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 	}
 
 	public Vector(Vector<T> vector) {
-		data = new T[vector.length];
+		data = new double[vector.length];
 		shape = new int[1] { vector.length };
 
 		Copy(vector);
@@ -134,8 +134,8 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 		double sum = 0;
 
 		for(int i = 0; i < length; i++) {
-			double a = System.Convert.ToDouble(data[i]);
-			double b = System.Convert.ToDouble(vector.GetElement(i));
+			double a = data[i];
+			double b = vector.GetDouble(i);
 			sum += (a * b);
 		}
 
@@ -156,8 +156,7 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 		double result = 0;
 
 		for(int i = 0; i < length; i++) {
-			double e = System.Convert.ToDouble(data[i]);
-			result += System.Math.Pow(System.Math.Abs(e), n);
+			result += System.Math.Pow(System.Math.Abs(data[i]), n);
 		}
 		result = System.Math.Pow(result, 1.0/n);
 
@@ -172,8 +171,7 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 		double result = 0;
 
 		for(int i = 0; i < length; i++) {
-			double e = System.Convert.ToDouble(data[i]);
-			result = System.Math.Max(result, System.Math.Abs(e));
+			result = System.Math.Max(result, System.Math.Abs(data[i]));
 		}
 
 		return (T)System.Convert.ChangeType(result, typeof(T));
@@ -186,8 +184,7 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 		double norm = System.Convert.ToDouble(Norm(2));
 
 		for(int i = 0; i < length; i++) {
-			double e = System.Convert.ToDouble(data[i]);
-			unit[i] = (T)System.Convert.ChangeType(e/norm, typeof(T));
+			unit.SetDouble(data[i]/norm, i);
 		}
 
 		return unit;

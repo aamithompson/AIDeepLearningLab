@@ -12,17 +12,24 @@ using UnityEngine;
 
 namespace lmath {
 public class Matrix<T> : LArray<T> where T : System.IConvertible {
-	public static int STRASSEN_MATRIX_SIZE = 4;
+	public static int STRASSEN_MATRIX_SIZE = 64*64;
 
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public Matrix() {
-		data = new T[0];
+		data = new double[0];
 		shape = new int[2] { 0, 0 };
 	}
 
+	public Matrix(double[] data, int m, int n) {
+		this.data = new double[data.Length];
+		shape = new int[2] { m, n };
+		Reshape(m, n);
+		SetDoubleData(data);
+	}
+
 	public Matrix(T[] data, int m, int n) {
-		this.data = new T[data.Length];
+		this.data = new double[data.Length];
 		shape = new int[2] { m, n };
 		Reshape(m, n);
 		SetData(data);
@@ -33,16 +40,24 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 	}
 	
 	public Matrix(Matrix<T> matrix) {
-		data = new T[matrix.GetLength()];
+		data = new double[matrix.GetLength()];
 		shape = new int[2] { matrix.GetShape()[0], matrix.GetShape()[1] };
 		Copy(matrix);
 	}
 
 // DATA MANAGEMENT
 //------------------------------------------------------------------------------
+	public double GetDouble(int i, int j) {
+		return GetDouble(new int[] { i, j });
+    }
+
 	public T GetElement(int i, int j) {
 		return GetElement(new int[] { i, j });
 	}
+
+	public void SetDouble(double e, int i, int j) {
+		SetDouble(e, new int[] { i, j });
+    }
 
 	public void SetElement(T e, int i, int j) {
 		SetElement(e, new int[] { i, j });
@@ -62,7 +77,7 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 		Matrix<T> row = Zeros(1, shape[1]);
 
 		for(int k = 0; k < shape[1]; k++) {
-			row[0, k] = GetElement(i, k);
+			row.SetDouble(GetDouble(i, k), 0, k);
 		}
 		
 		return row;
@@ -72,7 +87,7 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 		Matrix<T> column = Zeros(shape[0], 1);
 		
 		for(int k = 0; k < shape[0]; k++) {
-			column[k, 0] = GetElement(k, j);
+			column.SetDouble(GetDouble(k, j), k, 0);
 		}
 
 		return column;
@@ -103,10 +118,9 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 
 	public static Matrix<T> Identity(int n) {
 		Matrix<T> matrix = Zeros(n, n);
-		T one = (T)System.Convert.ChangeType(1, typeof(T));
 
 		for(int i = 0; i < n; i++) {
-			matrix.SetElement(one, i, i);
+			matrix.SetDouble(1, i, i);
 		}
 
 		return matrix;
@@ -116,8 +130,9 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 		Matrix<T> matrix = Zeros(m, n);
 		int diagonalLength = Mathf.Min(m, n);
 
+		double value = System.Convert.ToDouble(e);
 		for(int i = 0; i < diagonalLength; i++) {
-				matrix.SetElement(e, i, i);
+				matrix.SetDouble(value, i, i);
 		}
 
 		return matrix;
@@ -219,11 +234,11 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 			for(int j = 0; j < p; j++) {
 				double sum = 0;
 				for(int k = 0; k < n; k++){
-					double a = System.Convert.ToDouble(A[i, k]);
-					double b = System.Convert.ToDouble(B[k, j]);
+					double a = A.GetDouble(i, k);
+					double b = B.GetDouble(k, j);
 					sum += a * b;
 				}
-				C[i, j] = (T)(System.Convert.ChangeType(sum , typeof(T)));
+				C.SetDouble(sum, i, j);
 			}
 		}
 
@@ -247,14 +262,14 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 		AP.SetSlice(A.GetData(), new int[,] { { 0, m - 1 }, { 0, n - 1 } });
 		BP.SetSlice(B.GetData(), new int[,] { { 0, n - 1 }, { 0, p - 1 } });
 
-		Matrix<T> A11 = new Matrix<T>(AP.GetSlice(new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
-		Matrix<T> A12 = new Matrix<T>(AP.GetSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
-		Matrix<T> A21 = new Matrix<T>(AP.GetSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
-		Matrix<T> A22 = new Matrix<T>(AP.GetSlice(new int[,] { { sd2, s - 1 }, { sd2, s - 1 } }), sd2, sd2);
-		Matrix<T> B11 = new Matrix<T>(BP.GetSlice(new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
-		Matrix<T> B12 = new Matrix<T>(BP.GetSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
-		Matrix<T> B21 = new Matrix<T>(BP.GetSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
-		Matrix<T> B22 = new Matrix<T>(BP.GetSlice(new int[,] { { sd2, s - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> A11 = new Matrix<T>(AP.GetDoubleSlice(new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
+		Matrix<T> A12 = new Matrix<T>(AP.GetDoubleSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> A21 = new Matrix<T>(AP.GetDoubleSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
+		Matrix<T> A22 = new Matrix<T>(AP.GetDoubleSlice(new int[,] { { sd2, s - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> B11 = new Matrix<T>(BP.GetDoubleSlice(new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
+		Matrix<T> B12 = new Matrix<T>(BP.GetDoubleSlice(new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } }), sd2, sd2);
+		Matrix<T> B21 = new Matrix<T>(BP.GetDoubleSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
+		Matrix<T> B22 = new Matrix<T>(BP.GetDoubleSlice(new int[,] { { sd2, s - 1 }, { sd2, s - 1 } }), sd2, sd2);
 
 		Matrix<T> M1 = Matrix<T>.StrassenMul(A11 + A22, B11 + B22);
 		Matrix<T> M2 = Matrix<T>.StrassenMul(A21 + A22, B11);
@@ -269,10 +284,10 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 		Matrix<T> C21 = M2 + M4;
 		Matrix<T> C22 = M1 - M2 + M3 + M6;
 		Matrix<T> CP = Matrix<T>.Zeros(s, s);
-		CP.SetSlice(C11.GetData(), new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } });
-		CP.SetSlice(C12.GetData(), new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } });
-		CP.SetSlice(C21.GetData(), new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } });
-		CP.SetSlice(C22.GetData(), new int[,] { { sd2, s - 1 }, { sd2, s - 1 } });
+		CP.SetDoubleSlice(C11.GetDoubleData(), new int[,] { { 0, sd2 - 1 }, { 0, sd2 - 1 } });
+		CP.SetDoubleSlice(C12.GetDoubleData(), new int[,] { { 0, sd2 - 1 }, { sd2, s - 1 } });
+		CP.SetDoubleSlice(C21.GetDoubleData(), new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } });
+		CP.SetDoubleSlice(C22.GetDoubleData(), new int[,] { { sd2, s - 1 }, { sd2, s - 1 } });
 
 		if(m==n && n==p && p==s) {
 			return CP;
@@ -290,11 +305,12 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 		for(int i = 0; i < m; i++) {
 			double sum = 0;
 			for(int j = 0; j < n; j++) {
-				double a = System.Convert.ToDouble(A[i, j]);
-				double b = System.Convert.ToDouble(x[j]);
+				double a = A.GetDouble(i, j);
+				double b = x.GetDouble(j);
 				sum += a * b;
             }
-			y[i] = (T)(System.Convert.ChangeType(sum , typeof(T)));
+
+			y.SetDouble(sum, i);
         }
 
 		return y;
@@ -315,7 +331,7 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 
 		for(int i = 0; i < m; i++) {
 			for(int j = 0; j < n; j++) {
-				AT[j, i] = A[i, j];
+				AT.SetDouble(A.GetDouble(i, j), j, i);
 			}
 		}
 
@@ -326,21 +342,20 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 	public T Norm() {
 		double result = 0;
 		for(int i = 0; i < data.Length; i++) {
-			double e = System.Convert.ToDouble(data[i]);
+			double e = data[i];
 			result += e * e;
 		}
 		result = System.Math.Sqrt(result);
 
 		return (T)System.Convert.ChangeType(result, typeof(T));
-		}
+	}
 	
 	//TRACE
 	//TODO : ERROR if shape[0] != shape[1]
 	public T Trace() {
 		double result = 0;
 		for(int i = 0; i < shape[0]; i++) {
-			double e = System.Convert.ToDouble(GetElement(i, i));
-			result += e;
+			result += GetDouble(i, i);
 		}
 
 		return (T)System.Convert.ChangeType(result, typeof(T));
@@ -351,17 +366,17 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 	public T Determinant(){
 		int n = shape[0];
 		if(n == 2) {
-			double a = System.Convert.ToDouble(GetElement(0, 0));
-			double b = System.Convert.ToDouble(GetElement(0, 1));
-			double c = System.Convert.ToDouble(GetElement(1, 0));
-			double d = System.Convert.ToDouble(GetElement(1, 1));
+			double a = GetDouble(0, 0);
+			double b = GetDouble(0, 1);
+			double c = GetDouble(1, 0);
+			double d = GetDouble(1, 1);
 			
 			double det = (a * d) - (b * c);
 			return (T)System.Convert.ChangeType(det, typeof(T));
 		}
 
 		if(n == 1) {
-			return data[0];
+			return (T)System.Convert.ChangeType(data[0], typeof(T));
 		}
 
 		double result = 0;
@@ -371,17 +386,17 @@ public class Matrix<T> : LArray<T> where T : System.IConvertible {
 			for(int i = 1; i < n; i++) {
 				for(int j = 0; j < n; j++) {
 					if(j < k) {
-						subMat[i - 1, j] = GetElement(i, j);
+						subMat.SetDouble(GetDouble(i, j), i - 1, j);
 					} else if(j > k) {
-						subMat[i - 1, j - 1] = GetElement(i, j);
+						subMat.SetDouble(GetDouble(i, j), i - 1, j - 1);
 					}
 				}
 			}
 
 			double negative = (((k + 1)%2) * 2) - 1;
-			double coefficient = System.Convert.ToDouble(GetElement(0, k));
+			double coefficient = GetDouble(0, k);
 			result += negative * coefficient * System.Convert.ToDouble(subMat.Determinant());
-			}
+		}
 		
 		return (T)System.Convert.ChangeType(result, typeof(T));
 	}

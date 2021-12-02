@@ -16,7 +16,7 @@ public class Tensor<T> : LArray<T> where T : System.IConvertible {
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public Tensor() {
-		data = new T[0];
+		data = new double[0];
 		shape = new int[0];
 	}
 
@@ -25,14 +25,14 @@ public class Tensor<T> : LArray<T> where T : System.IConvertible {
 	}
 
 	public Tensor(T[] data, int[] shape) {
-		data = new T[data.Length];
+		this.data = new double[data.Length];
 		shape = new int[shape.Length];
 		Reshape(shape);
 		SetData(data);
 	}
 
 	public Tensor(Tensor<T> tensor) {
-		data = new T[tensor.GetLength()];
+		data = new double[tensor.GetLength()];
 		shape = new int[tensor.rank];
 		for(int i = 0; i < rank; i++) {
 			shape[i] = 0;

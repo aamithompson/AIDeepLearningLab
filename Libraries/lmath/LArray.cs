@@ -15,7 +15,7 @@ namespace lmath {
 public abstract class LArray<T> where T : System.IConvertible {
 // VARIABLES
 //------------------------------------------------------------------------------
-	protected T[] data;
+	protected double[] data;
 	protected int[] shape;
 	public int rank { get { return shape.Length; } }
 	public static double epsilon = 0.00001;
@@ -23,7 +23,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public LArray() {
-		data = new T[0];
+		data = new double[0];
 		shape = new int[0];
 	}
 
@@ -32,21 +32,21 @@ public abstract class LArray<T> where T : System.IConvertible {
 	}
 
 	public LArray(T[] data, int[] shape) {
-		this.data = new T[data.Length];
+		this.data = new double[data.Length];
 		this.shape = new int[shape.Length];
 		Reshape(shape);
 		SetData(data);
 	}
 	
 	public LArray(T e, int[] shape) {
-		this.data = new T[data.Length];
+		this.data = new double[data.Length];
 		this.shape = new int[shape.Length];
 		Reshape(shape);
 		Fill(e);
 	}
 
 	public LArray(LArray<T> larray) {
-			data = new T[larray.GetLength()];
+			data = new double[larray.GetLength()];
 			shape = new int[larray.rank];
 			for(int i = 0; i < rank; i++) {
 				shape[i] = 0;
@@ -58,28 +58,44 @@ public abstract class LArray<T> where T : System.IConvertible {
 // DATA MANAGEMENT
 //------------------------------------------------------------------------------
 	//ELEMENT
-	public T GetElement(int index) {
+	public double GetDouble(int index) {
 		if(index < 0) {
 			index = GetLength() + index;
         }
 
 		return data[index];
+    }
+
+	public double GetDouble(int[] indices) {
+		return GetDouble(GetIndex(indices));
+    }
+
+	public T GetElement(int index) {
+		return (T)System.Convert.ChangeType(GetDouble(index), typeof(T));
 	}
 
 	public T GetElement(int[] indices) {
-		return data[GetIndex(indices)];
+		return GetElement(GetIndex(indices));
 	}
 
-	public void SetElement(T e, int index){
+	public void SetDouble(double e, int index) {
 		if(index < 0) {
 			index = GetLength() + index;
         }
 
 		data[index] = e;
+    }
+
+	public void SetDouble(double e, int[] indices) {
+		SetDouble(e, GetIndex(indices));
+	}
+
+	public void SetElement(T e, int index){
+		SetDouble(System.Convert.ToDouble(e), index);
 	}
 
 	public void SetElement(T e, int[] indices) {
-		data[GetIndex(indices)] = e;
+		SetElement(e, GetIndex(indices));
 	}
 
 	public T this[int index] {
@@ -92,12 +108,31 @@ public abstract class LArray<T> where T : System.IConvertible {
 		}
 	}
 
+	public void SetDoubleData(double[] data) {
+		for(int i = 0; i < data.Length; i++) {
+				SetDouble(data[i], i);
+		}
+	}
+
 	//DATA
 	//TODO : ERROR for when data.length != this.data.length
 	public void SetData(T[] data) {
 		for(int i = 0; i < data.Length; i++) {
 				SetElement(data[i], i);
 		}
+	}
+
+	public void SetDoubleData(System.Array data) {
+		double[] data1D = NDArrayTo1DArrayDouble(data);
+		int totalLength = 1;
+		
+		shape = new int[data.Rank];
+		for(int i = 0; i < rank; i++) {
+			shape[i] =  data.GetLength(i);
+			totalLength *= shape[i];
+		}
+		this.data = new double[totalLength];
+		SetDoubleData(data1D);
 	}
 
 	//TODO : ERROR for when System.Array data ranks != shape.length
@@ -110,21 +145,33 @@ public abstract class LArray<T> where T : System.IConvertible {
 			shape[i] =  data.GetLength(i);
 			totalLength *= shape[i];
 		}
-		this.data = new T[totalLength];
+		this.data = new double[totalLength];
 		SetData(data1D);
 	}
 
+	public double[] GetDoubleData() {
+		double[] data = new double[this.data.Length];
+		for (int i = 0; i < data.Length; i++) {
+			data[i] = GetDouble(i);
+		}
+
+		return data;
+	}
+
 	public T[] GetData() {
-			T[] data = new T[this.data.Length];
-			System.Array.Copy(this.data, data, data.Length);
-			return data;
+		T[] data = new T[this.data.Length];
+		for(int i = 0; i < data.Length; i++) {
+			data[i] = GetElement(i);
+        }
+
+		return data;
 	}
 
 	//SLICE
 	//TODO : ERROR for when range is outside shape lengths
 	//TODO : ERROR for when data length != total length
 	//This function uses an INCLUSIVE [a, b] range
-	public void SetSlice(T[] data, int[,] range) {
+	public void SetDoubleSlice(double[] data, int[,] range) {
 		int rank = range.GetLength(0);
 		int[] coordinate = new int[rank];
 		int totalLength = 1;
@@ -142,7 +189,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 						coordinate[j - 1]++;
 					}
 				} else {
-					SetElement(data[i], coordinate);
+					SetDouble(data[i], coordinate);
 					break;
 				}
 			}
@@ -150,19 +197,33 @@ public abstract class LArray<T> where T : System.IConvertible {
 			coordinate[rank - 1]++;
 		}
 	}
+
+	public void SetDoubleSlice(System.Array data, int[,] range) {
+		double[] data1D = NDArrayTo1DArrayDouble(data);
+		SetDoubleSlice(data1D, range);
+    }
+
+	public void SetSlice(LArray<T> larray, int[,] range) {
+		SetDoubleSlice(larray.GetDoubleData(), range);
+	}
+
+	public void SetSlice(T[] data, int[,] range) {
+		double[] arr = new double[data.Length];
+		for(int i = 0; i < data.Length; i++) {
+			arr[i] = System.Convert.ToDouble(data[i]);
+        }
+
+		SetDoubleSlice(arr, range);
+	}
 	
 	public void SetSlice(System.Array data, int[,] range) {
 		T[] data1D = NDArrayTo1DArray(data);
 		SetSlice(data1D, range);
 	}
-
-	public void SetSlice(LArray<T> larray, int[,] range) {
-		SetSlice(larray.GetData(), range);
-	}
 	
 	//TODO : ERROR for when range is outside rank lengths
 	//This function uses an INCLUSIVE [a, b] range
-	public T[] GetSlice(int[,] range) {
+	public double[] GetDoubleSlice(int[,] range) {
 			//int[,] range -> {{a1, b1}, {a2, b2}, . . ., {aN, bN}}
 			int rank = range.GetLength(0);
 			int[] coordinate = new int[rank];
@@ -173,7 +234,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 				coordinate[i] = range[i, 0];
 			}
 
-			T[] slice = new T[totalLength];
+			double[] slice = new double[totalLength];
 			for(int i = 0; i < totalLength; i++){
 				for(int j = rank - 1; j >= 0; j--) {
 					if(coordinate[j] > range[j, 1]) {
@@ -182,7 +243,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 							coordinate[j - 1]++;
 						}
 					} else {
-						slice[i] = data[GetIndex(coordinate)];
+						slice[i] = GetDouble(coordinate);
 						break;
 					}
 				}
@@ -192,6 +253,16 @@ public abstract class LArray<T> where T : System.IConvertible {
 
 			return slice;
 	}
+
+	public T[] GetSlice(int[,] range) {
+		double[] arr = GetDoubleSlice(range);
+		T[] slice = new T[arr.Length];
+		for(int i = 0; i < arr.Length; i++) {
+			slice[i] = (T)System.Convert.ChangeType(arr[i], typeof(T));
+		}
+
+		return slice;
+    }
 	
 	//SHAPE
 	public int[] GetShape() {
@@ -205,6 +276,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 		for(int i = 0; i < shape.Length; i++) {
 			totalLength *= shape[i];
 		}
+
 		return totalLength;
 	}
 	
@@ -219,8 +291,8 @@ public abstract class LArray<T> where T : System.IConvertible {
 			coordinate[i] = 0;
 			totalLength *= shape[i];
 		}
-		T zero = (T)System.Convert.ChangeType(0, typeof(T));
-		T[] data = new T[totalLength];
+
+		double[] data = new double[totalLength];
 		if(this.shape.Length == 0) {
 			this.shape = new int[shape.Length];
 			for(int i = 0; i < shape.Length; i++) {
@@ -244,7 +316,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 			for (int j = 0; j < rank; j++) {
 				//MonoBehaviour.print(string.Join(", ", new List<int>(this.shape).ConvertAll(x => x.ToString()).ToArray()));
 				if (coordinate[j] >= this.shape[j]) {
-					data[i] = zero;
+					data[i] = 0;
 					outOfBounds = true;
 					break;
 				}
@@ -252,14 +324,14 @@ public abstract class LArray<T> where T : System.IConvertible {
 
 			if (!outOfBounds) {
 				//MonoBehaviour.print(string.Join(", ", new List<int>(coordinate).ConvertAll(x => x.ToString()).ToArray()));
-				data[i] = GetElement(coordinate);
+				data[i] = GetDouble(coordinate);
 			}
-
+			
 			coordinate[rank - 1]++;
 		}
 
-		this.data = new T[totalLength];
-		System.Array.Copy(data, this.data, totalLength);
+		this.data = new double[totalLength];
+		SetDoubleData(data);
 		System.Array.Copy(shape, this.shape, rank);
 	}
 	
@@ -267,13 +339,14 @@ public abstract class LArray<T> where T : System.IConvertible {
 		Reshape(larray.GetShape());
 		
 		for(int i = 0; i < data.Length; i++) {
-			data[i] = larray.GetElement(i);
+			data[i] = larray.GetDouble(i);
 		}
 	}
 
 	public void Fill(T e) {
+		double value = System.Convert.ToDouble(e);
 		for(int i = 0; i < data.Length; i++) {
-				data[i] = e;
+				data[i] = value;
 		}
 	}
 
@@ -302,7 +375,41 @@ public abstract class LArray<T> where T : System.IConvertible {
 
 // HELPER FUNCTIONS
 //------------------------------------------------------------------------------
-	private static T[] NDArrayTo1DArray(System.Array arrayND) {
+	private static double[] NDArrayTo1DArrayDouble(System.Array arrayND) {
+		int rank = arrayND.Rank;
+		long length = arrayND.Length;
+		double[] array1D = new double[length];
+		int[] dLength = new int[rank];
+		int[] coordinate = new int[rank];
+
+		//Setting up maximum length of each rank and intital 
+		//coordinate
+		for(int i = 0; i < rank; i++) {
+			dLength[i] = arrayND.GetLength(i);
+			coordinate[i] = 0;
+		}
+
+		//Iterating through a long since length is multiplicative via 
+		//ranks which scales very quickly
+		for(long i = 0; i < length; i++) {
+			array1D[i] = (double)arrayND.GetValue(coordinate);
+			coordinate[rank - 1]++;
+			for(int j = rank - 1; j >= 0; j--) {
+				if(coordinate[j] >= dLength[j]) {
+					coordinate[j] = 0;
+					if(j > 0) {
+						coordinate[j - 1]++;
+					}
+				} else {
+					break;
+				}
+			}
+		}
+
+		return array1D;
+	}
+
+	private static T[] NDArrayTo1DArray(System.Array arrayND) { 
 		int rank = arrayND.Rank;
 		long length = arrayND.Length;
 		T[] array1D = new T[length];
@@ -342,20 +449,15 @@ public abstract class LArray<T> where T : System.IConvertible {
 	//TODO : ERROR if shape != larray.shape
 	public void Add(LArray<T> larray) {
 		for(int i = 0; i < larray.GetLength(); i++) {
-			double a = System.Convert.ToDouble(data[i]);
-			double b = System.Convert.ToDouble(larray.GetElement(i));
-			T e = (T)System.Convert.ChangeType(a + b, typeof(T));
-			data[i] = e;
+			data[i] += larray.GetDouble(i);
 		}
 	}
 
 	//SCALAR MULTIPLICATION
 	public void Scale(T c) {
+		double value = System.Convert.ToDouble(c);
 		for(int i = 0; i < data.Length; i++) {
-			double a = System.Convert.ToDouble(data[i]);
-			double b = System.Convert.ToDouble(c);
-			T e = (T)System.Convert.ChangeType(a * b, typeof(T));
-			data[i] = e;
+			data[i] *= value;
 		}
 	}
 
@@ -373,10 +475,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 
 	public void HadamardProduct(LArray<T> larray) {
 		for(int i = 0; i < data.Length; i++) {
-			double a = System.Convert.ToDouble(data[i]);
-			double b = System.Convert.ToDouble(larray.GetElement(i));
-			T e = (T)System.Convert.ChangeType(a * b, typeof(T));
-			data[i] = e;
+			data[i] *= larray.GetDouble(i);
 		}
     }
 
@@ -387,14 +486,14 @@ public abstract class LArray<T> where T : System.IConvertible {
 			float minValue = System.Convert.ToSingle(min.GetElement(i));
 			float maxValue = System.Convert.ToSingle(max.GetElement(i));
 			float e = UnityEngine.Random.Range(minValue, maxValue);
-			data[i] = (T)System.Convert.ChangeType(e, typeof(T));
+			data[i] = e;
 		}
 	}
 
 	public void RandomizeN(float mean, float stdDev) {
 		for(int i = 0; i < data.Length; i++) {
 			float e = Statistics.randomN(mean, stdDev);
-			data[i] = (T)System.Convert.ChangeType(e, typeof(T));
+			data[i] = e;
 		}
 	}
 
@@ -404,13 +503,13 @@ public abstract class LArray<T> where T : System.IConvertible {
 		int[] coordinate = new int[rank];
 		int brackets = rank;
 		
-		for(long i = 0; i < data.LongLength; i++) {
+		for(int i = 0; i < data.LongLength; i++) {
 			while(brackets > 0){
 				s += "[";
 				brackets--;
 			}
 
-			s += data[i].ToString();
+			s += GetElement(i).ToString();
 			coordinate[rank - 1]++;
 
 			if(coordinate[rank - 1] < shape[rank - 1]) {
@@ -442,7 +541,7 @@ public abstract class LArray<T> where T : System.IConvertible {
 
 	public void Operation(System.Func<T, T> f) {
 		for(int i = 0; i < data.Length; i++) {
-			data[i] = f(data[i]);
+			data[i] = System.Convert.ToDouble(f(GetElement(i)));
         }
     }
 }
