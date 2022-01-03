@@ -23,7 +23,7 @@ public class DataSet {
         dataSet = new List<Data>();
     }
 
-    public DataSet(List<Vector<float>> x, List<Vector<float>> y) {
+    public DataSet(List<Vector> x, List<Vector> y) {
         index = 0;
         dataSet = new List<Data>();
         AddSet(x, y);
@@ -46,11 +46,11 @@ public class DataSet {
         index = 0;
     }
 
-    public void Add(Vector<float> x, Vector<float> y) {
+    public void Add(Vector x, Vector y) {
         dataSet.Add(new Data(x, y));
     }
 
-    public void AddSet(List<Vector<float>> x, List<Vector<float>> y) {
+    public void AddSet(List<Vector> x, List<Vector> y) {
         int n = Mathf.Min(x.Count, y.Count);
         for(int i = 0; i < n; i++) {
             Add(x[i], y[i]);
@@ -88,16 +88,16 @@ public class DataSet {
     }
 }
 public class Data {
-    public Vector<float> x;
-    public Vector<float> y;
-    public Data(Vector<float> x, Vector<float> y) {
-        this.x = new Vector<float>(x);
-        this.y = new Vector<float>(y);
+    public Vector x;
+    public Vector y;
+    public Data(Vector x, Vector y) {
+        this.x = new Vector(x);
+        this.y = new Vector(y);
     }
 
     public Data(Data data) {
-        this.x = new Vector<float>(data.x);
-        this.y = new Vector<float>(data.y);
+        this.x = new Vector(data.x);
+        this.y = new Vector(data.y);
     }
 }
 }// END namespace adl

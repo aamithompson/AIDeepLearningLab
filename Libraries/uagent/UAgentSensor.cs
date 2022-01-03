@@ -20,7 +20,7 @@ public class UAgentSensor : MonoBehaviour {
 
 	//DATA
 	public static int sightVectorSize = 6;
-	public Tensor<float> sightData;
+	public Tensor sightData;
 
 	//SIGHT SETTING(s)
 	public bool hasSight = true;
@@ -51,7 +51,7 @@ public class UAgentSensor : MonoBehaviour {
 // MONOBEHAVIOR METHODS
 //------------------------------------------------------------------------------
 	void Awake(){
-		sightData = Tensor<float>.Zeros(new int[] { rows, columns, sightVectorSize });
+		sightData = Tensor.Zeros(new int[] { rows, columns, sightVectorSize });
 	}
 
 	void Start(){
@@ -74,14 +74,14 @@ public class UAgentSensor : MonoBehaviour {
 //------------------------------------------------------------------------------
 	private void UpdateSightData() {
 		if(sightData.GetShape()[0] != rows || sightData.GetShape()[1] != columns) {
-			sightData = Tensor<float>.Zeros(new int[] { rows, columns, sightVectorSize });
+			sightData = Tensor.Zeros(new int[] { rows, columns, sightVectorSize });
 		}
 	}
 
 	IEnumerator IESight() {
 		while(true) {
-			Vector<int> point = Vector<int>.Zeros(2);
-			Matrix<int> count = Matrix<int>.Zeros(rows, columns);
+			Vector point = Vector.Zeros(2);
+			Matrix count = Matrix.Zeros(rows, columns);
 
 			UpdateSightData();
 			sightData.Fill(0.0f);
@@ -95,19 +95,19 @@ public class UAgentSensor : MonoBehaviour {
 				point = GetSightPoint(gb);
 				if (point != null) {
 					Renderer renderer = gb.GetComponent<Renderer>();
-					count[point[0], point[1]] += 1;
+					count[(int)point[0], (int)point[1]] += 1;
 
 					if (renderer != null) {
 						for (int j = 0; j < 3; j++) {
-							float value = sightData.GetElement(new int[] { point[0], point[1], j });
+							float value = sightData.GetElement(new int[] { (int)point[0], (int)point[1], j });
 							value += renderer.material.color[j];
-							sightData.SetElement(value, new int[] { point[0], point[1], j });
+							sightData.SetElement(value, new int[] { (int)point[0], (int)point[1], j });
 						}
 
 						for (int j = 3; j < 6; j++) {
-							float value = sightData.GetElement(new int[] { point[0], point[1], j });
+							float value = sightData.GetElement(new int[] { (int)point[0], (int)point[1], j });
 							value += gb.transform.localScale[j - 3];
-							sightData.SetElement(value, new int[] { point[0], point[1], j });
+							sightData.SetElement(value, new int[] { (int)point[0], (int)point[1], j });
 						}
 					}
 
@@ -130,7 +130,7 @@ public class UAgentSensor : MonoBehaviour {
 		}
 	}
 
-	private Vector<int> GetSightPoint(GameObject gb) {
+	private Vector GetSightPoint(GameObject gb) {
 		Vector2 origin = new Vector2(transform.position.x, transform.position.z);
 		Vector2 foward = new Vector2(transform.forward.x, transform.forward.z);
 		Vector2 target = new Vector2(gb.transform.position.x, gb.transform.position.z);
@@ -143,7 +143,7 @@ public class UAgentSensor : MonoBehaviour {
 			int row = Mathf.FloorToInt(rows * ((distance - minSightRadius) / (maxSightRadius - minSightRadius)));
 			row = Clamp<int>(row, 0, rows);
 			column = Clamp<int>(column, 0, columns);
-			return new Vector<int>(new int[] { row, column });
+			return new Vector(new float[] { row, column });
 		}
 		
 		return null;

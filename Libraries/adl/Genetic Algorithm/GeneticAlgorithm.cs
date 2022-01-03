@@ -8,8 +8,9 @@
 //==============================================================================
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Threading.Tasks;
 using lmath;
+using ncomp;
 
 namespace adl {
 public class GeneticAlgorithm {
@@ -18,146 +19,156 @@ public class GeneticAlgorithm {
 	private List<Individual> population;
 
 	public int populationCount;
-	public Matrix<float> minValueMatrix;
-	public Matrix<float> maxValueMatrix;
+	public Matrix minValueMatrix;
+	public Matrix maxValueMatrix;
+	//TODO implement ENUM for guassian vs uniform
+	public Matrix meanValueMatrix;
+	public Matrix stdDevValueMatrix;
 
-	public System.Func<Matrix<float>, float> fitnessFunction;
+	public System.Func<Matrix, float> fitnessFunction;
+	public Vector fitnessProportions;
 
-	//public float minCrossoverPercent;
-	//public float maxCrossoverPercent;
 	public int crossPoints;
 	public int crossOffset;
 
 	public float mutationRate;
-	public Matrix<float> minMutationMatrix; //current value +/- mutation value
-	public Matrix<float> maxMutationMatrix; //min and maxes out at value matrices
+	public Matrix minMutationMatrix; //current value +/- mutation value
+	public Matrix maxMutationMatrix; //min and maxes out at value matrices
 	
 
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public GeneticAlgorithm() {
 		populationCount = 0;
-		minValueMatrix = Matrix<float>.Zeros(1, 1);
-		maxValueMatrix = Matrix<float>.Zeros(1, 1);
-		//minCrossoverPercent = 0f;
-		//maxCrossoverPercent = 0f;
+		minValueMatrix = Matrix.Zeros(1, 1);
+		maxValueMatrix = Matrix.Zeros(1, 1);
 		crossPoints = 1;
 		crossOffset = 0;
 		mutationRate = 0f;
-		minMutationMatrix = Matrix<float>.Zeros(1, 1);
-		maxMutationMatrix = Matrix<float>.Zeros(1, 1);
+		minMutationMatrix = Matrix.Zeros(1, 1);
+		maxMutationMatrix = Matrix.Zeros(1, 1);
 	}
 
 // ALGORITHM
 //------------------------------------------------------------------------------
 	//GENERATION CONTROL
-	public void Run(int k = 1) {
+	public void Run(int k = 1, bool parallel=true) {
 		Populate();
-		Continue(k);
+		Continue(k, parallel);
 	}
 
-	public void Continue(int k = 1) {
+	public void Continue(int k = 1, bool parallel=true) {
 		while(k > 0) {
-			Fit();
-			Crossover();
-			Mutate();
-			EvaluatePopulation();
+			Fit(parallel);
+			Crossover(parallel);
+			Mutate(parallel);
 			k--;
 		}
+
+		EvaluatePopulation(parallel);
 	}
 	
 	//INITIALIZE POPULATION
 	public void Populate() {
 		population = new List<Individual>();
+		fitnessProportions = Vector.Zeros(populationCount);
 		for(int i = 0; i < populationCount; i++) {
-			Individual individual = new Individual();
-			individual.data = Matrix<float>.Random(minValueMatrix, maxValueMatrix);
-			individual.fitnessScore = 0.0f;
+			Individual individual = new Individual(Matrix.Random(minValueMatrix, maxValueMatrix));
 			population.Add(individual);
 		}
-
-		//EvaluatePopulation();
 	}
 	
-	//TODO TODO TODO TODO TODO TODO, FIX THIS!!!!
-	//TODO TODO TODO TODO TODO TODO, FIX THIS!!!!
-	//TODO TODO TODO TODO TODO TODO, FIX THIS!!!!
+
 	//FITNESS FUNCTION
-	public void Fit() {
-		for(int i = 0; i < populationCount; i++) {
-			EvalutateIndividual(i);
-
-			if(i > 0) {
-				Individual individual = new Individual();
-				individual.data = population[i].data;
-				individual.fitnessScore = population[i].fitnessScore + population[i - 1].fitnessScore;
-				population[i] = individual;
-			}
-		}
-
+	public void Fit(bool parallel=true) {
 		List<Individual> fitPopulation = new List<Individual>();
-		float minValue = 0;
-		float maxValue = population[populationCount - 1].fitnessScore;
+		EvaluatePopulation(parallel);
+
 		for(int i = 0; i < populationCount; i++) {
-			float score = UnityEngine.Random.Range(minValue, maxValue);
-			for(int j = 0; j < populationCount; j++) {
-				if(score <= population[j].fitnessScore) {
-					fitPopulation.Add(population[j]);
+			float score = UnityEngine.Random.value;
+			int index = 0;
+			for(index = populationCount - 1; index >= 0; index--) {
+				if(score <= fitnessProportions[index]) {
 					break;
 				}
 			}
+
+			fitPopulation.Add(population[index]);
 		}
 
 		population = fitPopulation;
 	}
 
-	public void EvaluatePopulation() {
-		for(int i = 0; i < populationCount; i++) {
-			EvalutateIndividual(i);
-		}
+	public void EvaluatePopulation(bool parallel=true) {
+		if(parallel) {
+			Parallel.For(0, populationCount - 1, i => {
+				EvalutateIndividual(i);
+			});
+        } else {
+			for(int i = 0; i < populationCount - 1; i++) {
+				EvalutateIndividual(i);
+            }
+        }
+
+		EvalutateIndividual(populationCount - 1, true);
 
 		population.Sort((x, y) => x.fitnessScore.CompareTo(y.fitnessScore));
 		population.Reverse();
 	}
 
-	private void EvalutateIndividual(int index) {
+	private void EvalutateIndividual(int index, bool update=false) {
 		float score = fitnessFunction(population[index].data);
-		Individual individual = new Individual();
-		individual.data = population[index].data;
-		individual.fitnessScore = score;
+		Individual individual = new Individual(population[index].data, score);
 		population[index] = individual;
+
+		if (update) {
+			population.Sort((x, y) => x.fitnessScore.CompareTo(y.fitnessScore));
+			population.Reverse();
+
+			float sum = 0.0f;
+			for (int i = 0; i < populationCount; i++) {
+				fitnessProportions[i] = population[i].fitnessScore;
+				sum += population[i].fitnessScore;
+			}
+			fitnessProportions *= (1.0f / sum);
+
+			for (int i = populationCount - 2; i >= 0; i--) {
+				fitnessProportions[i] += fitnessProportions[i+1];
+            }
+        }
 	}
 
 	//CROSSOVER
-	public void Crossover() {
-		for(int i = 0; i < populationCount - 1; i += 2) {
-			Individual[] offspring = Offspring(population[i], population[i + 1]);
-			population[i] = offspring[0];
-			population[i + 1] = offspring[1];
-		}
+	public void Crossover(bool parallel=true) {
+		if(parallel) {
+			Parallel.For(0, (populationCount - 1)/2, i => {
+				int index = i * 2;
+				Individual[] offspring = Offspring(population[index], population[index + 1]);
+				population[index] = offspring[0];
+				population[index + 1] = offspring[1];
+			});
+        } else {
+			for(int i = 0; i < populationCount - 1; i += 2) {
+				Individual[] offspring = Offspring(population[i], population[i + 1]);
+				population[i] = offspring[0];
+				population[i + 1] = offspring[1];
+			}
+        }
 	}
 	
-	private Individual[] Offspring(Individual parentA, Individual parentB){
+	private Individual[] Offspring(Individual parentA, Individual parentB, bool parallel=true){
 		Individual[] children = new Individual[2];
-		Individual childA = new Individual();
-		Individual childB = new Individual();
-		Matrix<float> dataA = new Matrix<float>(parentB.data);
-		Matrix<float> dataB = new Matrix<float>(parentA.data);
-		/*float percent = UnityEngine.Random.Range(minCrossoverPercent, maxCrossoverPercent);
-		int crosspt = (int) (parentA.data.GetLength() * percent);
+		Individual childA = new Individual(parentB.data);
+		Individual childB = new Individual(parentA.data);
 
-		for(int i = 0; i < crosspt; i++) {
-			dataA[i] = parentA.data[i];	
-			dataB[i] = parentB.data[i];	
-		}*/
-
-		int n = dataA.GetLength();
+		int n = childA.data.GetLength();
 		if(crossPoints == 0) {
 			for(int i = 0; i < n; i++) {
-				bool flip = (Random.value > 0.5f);
+				float value = (parallel) ? ParallelRandom.NextFloat() : UnityEngine.Random.value;
+				bool flip = (value > 0.5f);
 				if(flip){
-					dataA[i] = parentA.data[i];
-					dataB[i] = parentB.data[i];
+					childA.data[i] = parentA.data[i];
+					childB.data[i] = parentB.data[i];
 				}
             }
         } else {
@@ -166,11 +177,11 @@ public class GeneticAlgorithm {
 			float a = distance - 1;
 			int i = 0;
 			while(crossPoints > 0) {
-				int point = Mathf.RoundToInt(a);
+				int point = UnityEngine.Mathf.RoundToInt(a);
 				while(i <= point && i < n) {
 					if (flip) {
-						dataA[(i + crossOffset) % n] = parentA.data[i];
-						dataB[(i + crossOffset) % n] = parentB.data[i];
+						childA.data[(i + crossOffset) % n] = parentA.data[i];
+						childB.data[(i + crossOffset) % n] = parentB.data[i];
                     }
 
 					i++;
@@ -182,10 +193,6 @@ public class GeneticAlgorithm {
             }
         }
 
-		childA.data = dataA;
-		childA.fitnessScore = 0;
-		childB.data = dataB;
-		childB.fitnessScore = 0;
 		children[0] = childA;
 		children[1] = childB;
 
@@ -193,50 +200,49 @@ public class GeneticAlgorithm {
 	}
 
 	//MUTATION
-	public void Mutate() {
-		for(int i = 0; i < populationCount; i++) {
-			population[i] = MutateIndividual(population[i]);
-		}
+	public void Mutate(bool parallel=true) {
+		if (parallel) {
+			Parallel.For(0, populationCount, i => {
+				MutateIndividual(i, true);
+			});
+        } else {
+			for(int i = 0; i < populationCount; i++) {
+				MutateIndividual(i, false);
+			}
+        }
 	}
 	
-	private Individual MutateIndividual(Individual individual) {
-		Individual mutIndividual = new Individual();
-		Matrix<float> data = new Matrix<float>(individual.data);
-		
-		for(int i = 0; i < data.GetLength(); i++) {
-			float rvalue = UnityEngine.Random.value;
-			
-			if(rvalue < mutationRate) {
+	private void MutateIndividual(int index, bool parallel=true) {
+		for(int i = 0; i < population[index].data.GetLength(); i++) {
+			float rvalue = (parallel) ? ParallelRandom.NextFloat() : UnityEngine.Random.value;
+
+				if (rvalue < mutationRate) {
 					float minValue;
 					float maxValue;
 					if (minMutationMatrix.Norm() == 0f && maxMutationMatrix.Norm() == 0f) {
 						minValue = minValueMatrix[i];
 						maxValue = maxValueMatrix[i];
 					} else {
-						minValue = data[i] + minMutationMatrix[i];
+						minValue = population[index].data[i] + minMutationMatrix[i];
 						if (minValue < minValueMatrix[i]) {
 							minValue = minValueMatrix[i];
 						}
 					
-						maxValue = data[i] + maxMutationMatrix[i];
+						maxValue = population[index].data[i] + maxMutationMatrix[i];
 						if (maxValue > maxValueMatrix[i]) {
 							maxValue = maxValueMatrix[i];
 						}
 				}
 
-				data[i] = UnityEngine.Random.Range(minValue, maxValue);
+				population[index].data[i] = (parallel) ? ParallelRandom.NextFloat(minValue, maxValue) : UnityEngine.Random.Range(minValue, maxValue);
 			}
 		}
-
-		mutIndividual.data = data;
-		mutIndividual.fitnessScore = 0;
-		return mutIndividual;
 	}
 
 // OPERATIONS
 //------------------------------------------------------------------------------
-	public Matrix<float>[] GetPopulation() {
-		Matrix<float>[] population = new Matrix<float>[populationCount];
+	public Matrix[] GetPopulation() {
+		Matrix[] population = new Matrix[populationCount];
 		for(int i = 0; i < populationCount; i++) {
 			population[i] = GetIndividual(i);
 		}
@@ -244,16 +250,16 @@ public class GeneticAlgorithm {
 		return population;
 	}
 
-	public Matrix<float> GetIndividual(int i) {
-		return new Matrix<float>(population[i].data);
+	public Matrix GetIndividual(int i) {
+		return new Matrix(population[i].data);
 	}
 
-	public Matrix<float>[] GetBestFit(int n=1) {
-		Matrix<float>[] candidates = new Matrix<float>[n];
+	public Matrix[] GetBestFit(int n=1) {
+		Matrix[] candidates = new Matrix[n];
 
 		for(int i = 0; i < n; i++) {
 			candidates[i] = GetIndividual(i);
-			MonoBehaviour.print(population[i].fitnessScore);
+			UnityEngine.MonoBehaviour.print(population[i].fitnessScore);
 		}
 
 		return candidates;
@@ -269,14 +275,12 @@ public class GeneticAlgorithm {
 	
 	private void PrintPopulation() {
 		string s = "";
-		s += "GENETIC ALGORTIH PRINTOUT";
+		s += "GENETIC ALGORITHM PRINTOUT";
 		s += "\n--------------------------------";
 		s += "\nminValueMatrix:\n\t";
 		s += minValueMatrix.ToString();
 		s += "\nmaxValueMatrix:\n\t";
 		s += maxValueMatrix.ToString();
-		//s += "\nminCrossoverPercent:\t" + (minCrossoverPercent * 200).ToString() + "%";
-		//s += "\nmaxCrossoverPercent:\t" + (maxCrossoverPercent * 100).ToString() + "%";
 		s += "\ncrossPoints:\t" + crossPoints.ToString();
 		s += "\ncrossPoints:\t" + crossOffset.ToString();
 		s += "\nminMutationMatrix:\n\t";
@@ -285,7 +289,7 @@ public class GeneticAlgorithm {
 		s += maxMutationMatrix.ToString();
 		s += "\n--------------------------------";
 		s += "\npopulationCount:\t" + populationCount.ToString() + " total";
-		MonoBehaviour.print(s);
+		UnityEngine.MonoBehaviour.print(s);
 		for(int i = 0; i < populationCount; i++) {
 			PrintIndividual(i);
 		}
@@ -297,14 +301,28 @@ public class GeneticAlgorithm {
 		s += population[i].data.ToString() + ", ";
 		s += "F: " + population[i].fitnessScore.ToString() + "\n\t";
 		
-		MonoBehaviour.print(s);
+		UnityEngine.MonoBehaviour.print(s);
 	}
 
 // HELPER FUNCTIONS
 //------------------------------------------------------------------------------
-	private struct Individual {
-		public Matrix<float> data;
+	private class Individual {
+		public Matrix data;
 		public float fitnessScore;
+
+		public Individual() { 
+			this.data = new Matrix();
+		}
+		
+		public Individual(Matrix data) {
+			this.data = new Matrix(data);
+			this.fitnessScore = 0;
+        }
+
+		public Individual(Matrix data, float fitnessScore) {
+			this.data = new Matrix(data);
+			this.fitnessScore = fitnessScore;
+		}
 	}
 }
 }

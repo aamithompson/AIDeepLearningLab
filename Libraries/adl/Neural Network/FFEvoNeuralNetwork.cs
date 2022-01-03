@@ -17,10 +17,10 @@ namespace adl {
 public class FFEvoNeuralNetwork {
     public FFNeuralNetwork NN;
     public GeneticAlgorithm GA;
-    private List<Vector<float>> xBatch;
-    private List<Vector<float>> yBatch;
-    public List<Vector<float>> xTest;
-    public List<Vector<float>> yTest;
+    private List<Vector> xBatch;
+    private List<Vector> yBatch;
+    public List<Vector> xTest;
+    public List<Vector> yTest;
     
     public float minWeight;
     public float maxWeight;
@@ -51,14 +51,22 @@ public class FFEvoNeuralNetwork {
         UpdateGA();
     }
 
-    public Vector<float> Activate(Vector<float> input) {
+    
+    public FFEvoNeuralNetwork(Operation op, int sizeX, int sizeY) {
+        NN = new FFNeuralNetwork(op, sizeX, sizeY);
+        GA = new GeneticAlgorithm();
+        GA.fitnessFunction = NetworkScore;
+        UpdateGA();
+    }
+
+    public Vector Activate(Vector input) {
         return NN.Activate(input);
     }
 
-    public void SGD(List<Vector<float>> x, List<Vector<float>> y, int epochs=1, int miniBatchSize=10) {
+    public void SGD(List<Vector> x, List<Vector> y, int epochs=1, int miniBatchSize=10, bool parallel=true) {
         DataSet dataSet = new DataSet(x, y);
-        StreamWriter writer = new StreamWriter("D:\\Users\\aamit\\Documents\\Programming\\Artificial Intelligence\\AI Deep Learning Lab V3\\Data" + "\\test.txt", true);
-        writer.AutoFlush = true;
+        //StreamWriter writer = new StreamWriter("D:\\Users\\aamit\\Documents\\Programming\\Artificial Intelligence\\AI Deep Learning Lab V3\\Data" + "\\test.txt", true);
+        //writer.AutoFlush = true;
 
         if (!GASizeCorrect()) {
             UpdateGA();
@@ -66,19 +74,18 @@ public class FFEvoNeuralNetwork {
 
         for(int k = 0; k < epochs; k++) {
 			List<List<Data>> batches = dataSet.GetEpochBatchSet(miniBatchSize);
-            Debug.Log(batches.Count);
 
 			for(int i = 0; i < batches.Count; i++) {
-				xBatch = new List<Vector<float>>();
-				yBatch = new List<Vector<float>>();
+				xBatch = new List<Vector>();
+				yBatch = new List<Vector>();
 				for(int j = 0; j < batches[i].Count; j++) {
 					xBatch.Add(batches[i][j].x);
 					yBatch.Add(batches[i][j].y);
                 }
 
-				GA.Continue();
+				GA.Continue(1, parallel);
 
-                Matrix<float> bestd = GA.GetBestFit()[0];
+                Matrix bestd = GA.GetBestFit()[0];
                 int indexd = 0;
                 for(int l = 0; l < NN.weights.Count; l++) {
                     for(int j = 0; j < NN.weights[l].GetLength(); j++) {
@@ -92,22 +99,22 @@ public class FFEvoNeuralNetwork {
                     }
                 }
 
-                List<Vector<float>> yData = new List<Vector<float>>();
+                List<Vector> yData = new List<Vector>();
                 for (int j = 0; j < yTest.Count; j++) {
                     yData.Add(NN.Activate(xTest[j]));
                 }
 
-                string line = "[" + (k*batches[0].Count + i + 1).ToString() + "] Accuracy: " + Statistics.Accuracy(yData, yTest).ToString() + "%";
-                writer.WriteLine(line);
+                //string line = "[" + (k*batches[0].Count + i + 1).ToString() + "] Accuracy: " + Statistics.Accuracy(yData, yTest).ToString() + "%";
+                //writer.WriteLine(line);
             }
 
 
 			Debug.Log("[Neural Network] Epoch [" + (k+1).ToString() + "] / [" + epochs.ToString() + "] complete. (Batch Size: " + miniBatchSize.ToString() + ")");
         }
 
-        writer.Close();
+        //writer.Close();
 
-        Matrix<float> best = GA.GetBestFit()[0];
+        Matrix best = GA.GetBestFit()[0];
         int index = 0;
         for(int i = 0; i < NN.weights.Count; i++) {
             for(int j = 0; j < NN.weights[i].GetLength(); j++) {
@@ -122,7 +129,7 @@ public class FFEvoNeuralNetwork {
         }
     }
 
-    public float NetworkScore(Matrix<float> data) {
+    public float NetworkScore(Matrix data) {
         float score = 0;
 
         int index = 0;
@@ -139,8 +146,8 @@ public class FFEvoNeuralNetwork {
         }
 
         for(int i = 0; i < xBatch.Count; i++) {
-            Vector<float> y = NN.Activate(xBatch[i]);
-            Vector<float> y_actual = new Vector<float>(yBatch[i]);
+            Vector y = NN.Activate(xBatch[i]);
+            Vector y_actual = new Vector(yBatch[i]);
             float MSE = 0;
             for(int j = 0; j < y.length; j++) {
                 MSE += Mathf.Pow((y_actual[j] - y[j]), 2);
@@ -172,10 +179,10 @@ public class FFEvoNeuralNetwork {
                 nB += NN.biases[i].GetLength();
             }
 
-            GA.minValueMatrix = Matrix<float>.Zeros(nW + nB, 1);
-            GA.maxValueMatrix = Matrix<float>.Zeros(nW + nB, 1);
-            GA.minMutationMatrix = Matrix<float>.Zeros(nW + nB, 1);
-            GA.maxMutationMatrix = Matrix<float>.Zeros(nW + nB, 1);
+            GA.minValueMatrix = Matrix.Zeros(nW + nB, 1);
+            GA.maxValueMatrix = Matrix.Zeros(nW + nB, 1);
+            GA.minMutationMatrix = Matrix.Zeros(nW + nB, 1);
+            GA.maxMutationMatrix = Matrix.Zeros(nW + nB, 1);
 
             for (int i = 0; i < nW; i++) {
                 GA.minValueMatrix[i] = minWeight;

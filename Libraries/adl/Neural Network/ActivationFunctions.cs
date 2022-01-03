@@ -49,7 +49,8 @@ public static class ActivationFunctions {
 	}
 
 	public static float Sigmoid_DF(float x) {
-		return Sigmoid_F(x) * (1 - Sigmoid_F(x));
+		float sigmoid = Sigmoid_F(x);
+		return sigmoid * (1 - sigmoid);
     }
 	
 	//Tanh

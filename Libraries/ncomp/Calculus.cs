@@ -26,14 +26,14 @@ public static class Calculus {
 		}
 	}
 
-	public static float PartialDerivative(System.Func<Vector<float>, float> f, Vector<int> dims, Vector<float> x) {
-		Vector<float> xh = new Vector<float>(x);
-		xh[dims[0]] = xh[dims[0]] + h;
+	public static float PartialDerivative(System.Func<Vector, float> f, Vector dims, Vector x) {
+		Vector xh = new Vector(x);
+		xh[(int)dims[0]] = xh[(int)dims[0]] + h;
 
 		if (dims.length == 1) {
 			return (f(xh) - f(x)) / h;
 		} else {
-			Vector<int> dimsMinus = Vector<int>.Zeros(dims.length - 1);
+			Vector dimsMinus = Vector.Zeros(dims.length - 1);
 			for(int i = 1; i < dims.length; i++) {
 				dimsMinus[i - 1] = dims[i];
 			}
@@ -42,15 +42,15 @@ public static class Calculus {
 		}
 	}
 
-	public static float PartialDerivative(System.Func<Vector<float>, float> f, int dim, Vector<float> x, int n = 1) {
-		Vector<int> dims = Vector<int>.Ones(n) * dim;
+	public static float PartialDerivative(System.Func<Vector, float> f, int dim, Vector x, int n = 1) {
+		Vector dims = Vector.Ones(n) * dim;
 		
 		return PartialDerivative(f, dims, x);
 	}
 	
-	public static Matrix<float> Jacobian(System.Func<Vector<float>, float>[] functions, Vector<float> x) {
+	public static Matrix Jacobian(System.Func<Vector, float>[] functions, Vector x) {
 		int n = x.length;
-		Matrix<float> matrix = Matrix<float>.Zeros(n, n);
+		Matrix matrix = Matrix.Zeros(n, n);
 
 		for(int i = 0; i < n; i++) {
 			for(int j = 0; j < n; j++) {
@@ -61,13 +61,13 @@ public static class Calculus {
 		return matrix;
 	}
 
-	public static Matrix<float> Hessian(System.Func<Vector<float>, float> f, Vector<float> x) {
+	public static Matrix Hessian(System.Func<Vector, float> f, Vector x) {
 		int n = x.length;
-		Matrix<float> matrix = Matrix<float>.Zeros(n, n);
+		Matrix matrix = Matrix.Zeros(n, n);
 
 		for(int i = 0; i < n; i++) {
 			for(int j = 0; j < n; j++) {
-				Vector<int> dims = new Vector<int>(new int[] {i, j});
+				Vector dims = new Vector(new float[] {i, j});
 				matrix[n,n] = PartialDerivative(f, dims, x);
 			}
 		}

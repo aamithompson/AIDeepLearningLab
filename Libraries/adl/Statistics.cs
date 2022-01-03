@@ -85,7 +85,7 @@ public static class Statistics {
         return (tp + tn) / (tp + tn + fp + fn);
     }
 
-    public static float Accuracy(List<Vector<float>> yData, List<Vector<float>> yTarget) {
+    public static float Accuracy(List<Vector> yData, List<Vector> yTarget) {
             int correct = 0;
             int n = Mathf.Min(yData.Count, yTarget.Count);
             int l = yTarget[0].length;

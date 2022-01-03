@@ -20,8 +20,8 @@ public class SpeciesManager : MonoBehaviour {
 
 	public GameObject InstantiateCreature(int i) {
 		int n = species[i].presets.Count;
-		Vector<float> values = Vector<float>.Random(Vector<float>.Zeros(n), Vector<float>.Ones(n));
-		values += new Vector<float>(species[i].bias.ToArray());
+		Vector values = Vector.Random(Vector.Zeros(n), Vector.Ones(n));
+		values += new Vector(species[i].bias.ToArray());
 
 		float sum = 0;
 		for(int j = 0; j < n; j++) {
@@ -70,9 +70,9 @@ public class SpeciesManager : MonoBehaviour {
         }
 	}
 
-	public void InstantiateCreatureGroup(Vector<int> n, Vector3 cornerA, Vector3 cornerB) {
+	public void InstantiateCreatureGroup(Vector n, Vector3 cornerA, Vector3 cornerB) {
 		for(int i = 0; i < n.length; i++) {
-			InstantiateCreatureGroup(i, n[i], cornerA, cornerB);
+			InstantiateCreatureGroup(i, (int)n[i], cornerA, cornerB);
         }
     }
 

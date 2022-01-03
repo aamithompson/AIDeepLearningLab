@@ -11,12 +11,12 @@ using System.Collections.Generic;
 using UnityEngine;
 //------------------------------------------------------------------------------
 namespace lmath {
-public class Tensor<T> : LArray<T> where T : System.IConvertible {
+public class Tensor : LArray {
 
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public Tensor() {
-		data = new double[0];
+		data = new float[0];
 		shape = new int[0];
 	}
 
@@ -24,15 +24,15 @@ public class Tensor<T> : LArray<T> where T : System.IConvertible {
 		SetData(data);
 	}
 
-	public Tensor(T[] data, int[] shape) {
-		this.data = new double[data.Length];
+	public Tensor(float[] data, int[] shape) {
+		this.data = new float[data.Length];
 		shape = new int[shape.Length];
 		Reshape(shape);
 		SetData(data);
 	}
 
-	public Tensor(Tensor<T> tensor) {
-		data = new double[tensor.GetLength()];
+	public Tensor(Tensor tensor) {
+		data = new float[tensor.GetLength()];
 		shape = new int[tensor.rank];
 		for(int i = 0; i < rank; i++) {
 			shape[i] = 0;
@@ -44,20 +44,19 @@ public class Tensor<T> : LArray<T> where T : System.IConvertible {
 
 // DEFAULT OBJECTS
 //------------------------------------------------------------------------------
-	public static Tensor<T> Zeros(int[] shape) {
-		Tensor<T> tensor = new Tensor<T>();
+	public static Tensor Zeros(int[] shape) {
+		Tensor tensor = new Tensor();
 
 		tensor.Reshape(shape);
 
 		return tensor;
 	}
 
-	public static Tensor<T> Ones(int[] shape) {
-		Tensor<T> tensor = Zeros(shape);
-		T one = (T)System.Convert.ChangeType(1, typeof(T));
+	public static Tensor Ones(int[] shape) {
+		Tensor tensor = Zeros(shape);
 		
 		tensor.Reshape(shape);
-		tensor.Fill(one);
+		tensor.Fill(1.0f);
 
 		return tensor;
 	}
@@ -65,67 +64,67 @@ public class Tensor<T> : LArray<T> where T : System.IConvertible {
 // OPERATIONS
 //------------------------------------------------------------------------------
 	//ADDITION
-	public static Tensor<T> Add(Tensor<T> A, Tensor<T> B) {
-		Tensor<T> C = new Tensor<T>(A);
+	public static Tensor Add(Tensor A, Tensor B) {
+		Tensor C = new Tensor(A);
 		C.Add(B);
 		return C;
 	}
 
-	public static Tensor<T> operator +(Tensor<T> A, Tensor<T> B) {
+	public static Tensor operator +(Tensor A, Tensor B) {
 		return Add(A, B);
 	}
 	
 	//SCALAR MULTIPLICATION
-	public static Tensor<T> Scale(T c, Tensor<T> A) {
-		Tensor<T> B = new Tensor<T>(A);
+	public static Tensor Scale(float c, Tensor A) {
+		Tensor B = new Tensor(A);
 		B.Scale(c);
 		return B;
 	}
 
-	public static Tensor<T> operator *(T c, Tensor<T> A) {
+	public static Tensor operator *(float c, Tensor A) {
 		return Scale(c, A);
 	}
 
-	public static Tensor<T> operator *(Tensor<T> A, T c) {
+	public static Tensor operator *(Tensor A, float c) {
 		return Scale(c, A);
 	}
 
 	//SUBTRACT
-	public static Tensor<T> Negate(Tensor<T> A) {
-		Tensor<T> B = new Tensor<T>(A);
+	public static Tensor Negate(Tensor A) {
+		Tensor B = new Tensor(A);
 		B.Negate();
 		return B;
 	}
 
-	public static Tensor<T> operator -(Tensor<T> A) {
+	public static Tensor operator -(Tensor A) {
 		return Negate(A);
 	}
 
-	public static Tensor<T> Subtract(Tensor<T> A, Tensor<T> B) {
-		Tensor<T> C = new Tensor<T>(A);
+	public static Tensor Subtract(Tensor A, Tensor B) {
+		Tensor C = new Tensor(A);
 		C.Subtract(B);
 		return C;
 	}
 
-	public static Tensor<T> operator -(Tensor<T> A, Tensor<T> B) {
+	public static Tensor operator -(Tensor A, Tensor B) {
 		return Subtract(A, B);
 	}
 
-	public static Tensor<T> HadamardProduct(Tensor<T> A, Tensor<T> B) {
-		Tensor<T> C = new Tensor<T>(A);
+	public static Tensor HadamardProduct(Tensor A, Tensor B) {
+		Tensor C = new Tensor(A);
 		C.HadamardProduct(B);
 		return C;
     }
 
 	//RANDOM
-	public static Tensor<T> Random(Tensor<T> min, Tensor<T> max) {
-		Tensor<T> tensor = new Tensor<T>(min);
+	public static Tensor Random(Tensor min, Tensor max) {
+		Tensor tensor = new Tensor(min);
 		tensor.Randomize(min, max);
 		return tensor;
 	}
 
-	public static Tensor<T> RandomN(float mean, float stdDev, int[] shape) {
-		Tensor<T> tensor = Tensor<T>.Zeros(shape);
+	public static Tensor RandomN(float mean, float stdDev, int[] shape) {
+		Tensor tensor = Tensor.Zeros(shape);
 		tensor.RandomizeN(mean, stdDev);
 		return tensor;
 	}

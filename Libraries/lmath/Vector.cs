@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace lmath {
-public class Vector<T> : LArray<T> where T : System.IConvertible {
+public class Vector : LArray {
 // VARIABLES
 //------------------------------------------------------------------------------
 	public int length { get { return data.Length; } }
@@ -19,17 +19,17 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public Vector() {
-		data = new double[0];
+		data = new float[0];
 		shape = new int[1] { 0 };
 	}
 	
-	public Vector(T[] data) {
+	public Vector(float[] data) {
 		Reshape(data.Length);
 		SetData(data);
 	}
 
-	public Vector(Vector<T> vector) {
-		data = new double[vector.length];
+	public Vector(Vector vector) {
+		data = new float[vector.length];
 		shape = new int[1] { vector.length };
 
 		Copy(vector);
@@ -43,19 +43,18 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 
 // DEFAULT OBJECTS
 //------------------------------------------------------------------------------
-	public static Vector<T> Zeros(int n) {
-		Vector<T> vector = new Vector<T>();
+	public static Vector Zeros(int n) {
+		Vector vector = new Vector();
 		
 		vector.Reshape(n);
 
 		return vector;
 	}
 
-	public static Vector<T> Ones(int n) {
-		Vector<T> vector = Zeros(n);
-		T one = (T)System.Convert.ChangeType(1, typeof(T));
+	public static Vector Ones(int n) {
+		Vector vector = Zeros(n);
 		
-		vector.Fill(one);
+		vector.Fill(1.0f);
 
 		return vector;
 	}
@@ -63,128 +62,129 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 // OPERATIONS
 //------------------------------------------------------------------------------
 	//ADDITION
-	public static Vector<T> Add(Vector<T> v1, Vector<T> v2) {
-		Vector<T> v3 = new Vector<T>(v1);
+	public static Vector Add(Vector v1, Vector v2) {
+		Vector v3 = new Vector(v1);
 		v3.Add(v2);
 		return v3;
 	}
 
-	public static Vector<T> operator+(Vector<T> v1, Vector<T> v2) {
+	public static Vector operator+(Vector v1, Vector v2) {
 		return Add(v1, v2);
 	}
 	
 	//SCALAR MULTIPLICATION
-	public static Vector<T> Scale(Vector<T> v1, T c) {
-		Vector<T> v2 = new Vector<T>(v1);
+	public static Vector Scale(Vector v1, float c) {
+		Vector v2 = new Vector(v1);
 		v2.Scale(c);
 		return v2;
 	}
 
-	public static Vector<T> operator*(Vector<T> v1, T c) {
+	public static Vector operator*(Vector v1, float c) {
 		return Scale(v1, c);
 	}
 
-	public static Vector<T> operator*(T c, Vector<T> v1) {
+	public static Vector operator*(float c, Vector v1) {
 		return Scale(v1, c);
 	}
 	
 	//SUBTRACT
-	public static Vector<T> Negate(Vector<T> v1) {
-		Vector<T> v2 = new Vector<T>(v1);
+	public static Vector Negate(Vector v1) {
+		Vector v2 = new Vector(v1);
 		v2.Negate();
 		return v2;
 	}
 
-	public static Vector<T> operator-(Vector<T> v1) {
+	public static Vector operator-(Vector v1) {
 		return Negate(v1);
 	}
 
-	public static Vector<T> Subtract(Vector<T> v1, Vector<T> v2) {
-		Vector<T> v3 = new Vector<T>(v1);
+	public static Vector Subtract(Vector v1, Vector v2) {
+		Vector v3 = new Vector(v1);
 		v3.Subtract(v2);
 		return v3;
 	}
 
-	public static Vector<T> operator-(Vector<T> v1, Vector<T> v2) {
+	public static Vector operator-(Vector v1, Vector v2) {
 		return Subtract(v1, v2);
 	}
 
-	public static Vector<T> HadamardProduct(Vector<T> v1, Vector<T> v2) {
-		Vector<T> v3 = new Vector<T>(v1);
+	public static Vector HadamardProduct(Vector v1, Vector v2) {
+		Vector v3 = new Vector(v1);
 		v3.HadamardProduct(v2);
 		return v3;
 	}
 
 	//RANDOM
-	public static Vector<T> Random(Vector<T> min, Vector<T> max) {
-		Vector<T> vector = new Vector<T>(min);
+	public static Vector Random(Vector min, Vector max) {
+		Vector vector = new Vector(min);
 		vector.Randomize(min, max);
 		return vector;
 	}
 
-	public static Vector<T> RandomN(float mean, float stdDev, int n) {
-		Vector<T> vector = Vector<T>.Zeros(n);
+	public static Vector RandomN(float mean, float stdDev, int n) {
+		Vector vector = Vector.Zeros(n);
 		vector.RandomizeN(mean, stdDev);
 		return vector;
 	}
 
 	//DOT PRODUCT
 	//TODO : ERROR if length != vector.length
-	public T Dot(Vector<T> vector) {
-		double sum = 0;
+	public float Dot(Vector vector) {
+		float sum = 0;
 
+		float[] data = vector.AccessData();
 		for(int i = 0; i < length; i++) {
-			double a = data[i];
-			double b = vector.GetDouble(i);
+			float a = this.data[i];
+			float b = data[i];
 			sum += (a * b);
 		}
 
-		return (T)System.Convert.ChangeType(sum, typeof(T));
+		return sum;
 	}
 
-	public static T Dot(Vector<T> v1, Vector<T> v2) {
+	public static float Dot(Vector v1, Vector v2) {
 		return v1.Dot(v2);
 	}
 
-	public static T operator*(Vector<T> v1, Vector<T> v2) {
+	public static float operator*(Vector v1, Vector v2) {
 		return Dot(v1, v2);
 	}
 
 	//NORM
 	//TODO : ERROR if all elements are 0
-	public T Norm(int n = 2) {
+	public float Norm(int n = 2) {
 		double result = 0;
 
 		for(int i = 0; i < length; i++) {
 			result += System.Math.Pow(System.Math.Abs(data[i]), n);
 		}
-		result = System.Math.Pow(result, 1.0/n);
 
-		return (T)System.Convert.ChangeType(result, typeof(T));
+		return (float)System.Math.Pow(result, 1.0/n);
 	}
 
-	public T EuclidNorm() {
+	public float EuclidNorm() {
 		return Norm();
 	}
 
-	public T MaxNorm() {
-		double result = 0;
+	public float MaxNorm() {
+		float result = 0;
 
 		for(int i = 0; i < length; i++) {
 			result = System.Math.Max(result, System.Math.Abs(data[i]));
 		}
 
-		return (T)System.Convert.ChangeType(result, typeof(T));
+		return result;
 	}
 
 	//UNIT
 	//TODO : ERROR if all elements are 0
-	public Vector<T> Unit() {
-		Vector<T> unit = Zeros(length);
-		double norm = System.Convert.ToDouble(Norm(2));
+	public Vector Unit() {
+		Vector unit = Zeros(length);
+		float norm = Norm(2);
 
+		float[] data = unit.AccessData();
 		for(int i = 0; i < length; i++) {
-			unit.SetDouble(data[i]/norm, i);
+			data[i] = this.data[i]/norm;
 		}
 
 		return unit;
@@ -194,32 +194,32 @@ public class Vector<T> : LArray<T> where T : System.IConvertible {
 //------------------------------------------------------------------------------
 	//UNIT
 	public bool IsUnit() {
-		double norm = System.Convert.ToDouble(Norm(2));
+		float norm = Norm(2);
 
 		return System.Math.Abs(1.0 - norm) < epsilon;
 	}
 
-	public static bool IsUnit(Vector<T> v1) {
+	public static bool IsUnit(Vector v1) {
 		return v1.IsUnit();
 	}
 
 	//ORTHOGONAL
-	public bool IsOrthogonal(Vector<T> vector) {
+	public bool IsOrthogonal(Vector vector) {
 		double dot = System.Convert.ToDouble(Dot(vector));
 
 		return dot < epsilon;
 	}
 
-	public static bool IsOrthogonal(Vector<T> v1, Vector<T> v2) {
+	public static bool IsOrthogonal(Vector v1, Vector v2) {
 		return v1.IsOrthogonal(v2);
 	}
 
 	//ORTHONORMAL
-	public bool IsOrthonormal(Vector<T> vector) {
+	public bool IsOrthonormal(Vector vector) {
 		return IsOrthogonal(vector) && IsUnit() && vector.IsUnit();
 	}
 
-	public static bool IsOrthonormal(Vector<T> v1, Vector<T> v2) {
+	public static bool IsOrthonormal(Vector v1, Vector v2) {
 		return v1.IsOrthonormal(v2);
 	}
 }
