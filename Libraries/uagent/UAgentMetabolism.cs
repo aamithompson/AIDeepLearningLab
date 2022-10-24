@@ -2,7 +2,7 @@
 // Filename: UAgentMetabolism.cs
 // Author: Aaron Thompson
 // Date Created: 10/7/2021
-// Last Updated: 10/7/2021
+// Last Updated: 2/21/2022
 //
 // Description:
 //==============================================================================
@@ -18,8 +18,8 @@ public class UAgentMetabolism : MonoBehaviour {
 	public UAgentCore uAgentCore;
 
 	//METABOLISM SETTING(s)
-	public float nutrition;
-	public float maxNutrition;
+	public float satiation;
+	public float maxSatiation;
 	public float hungerPerSecond;
 
 	public float hydration;
@@ -30,6 +30,10 @@ public class UAgentMetabolism : MonoBehaviour {
 	public float maxRest;
 	public float tirePerSecond;
 
+	public float stamina;
+	public float maxStamina;
+	public float staminaPerSecond;
+
 	//INTERVAL SETTING(s)
 	[Range(0.001f, 2.0f)]
 	public float deltaTime = 0.0833f;
@@ -38,15 +42,12 @@ public class UAgentMetabolism : MonoBehaviour {
 
 // MONOBEHAVIOR METHODS
 //------------------------------------------------------------------------------
-	void Awake() {
-		uAgentCore = GetComponent<UAgentCore>();
-    }
-
 	// Use this for initialization
 	void Start () {
-		nutrition = maxNutrition;
+		satiation = maxSatiation;
 		hydration = maxHydration;
 		rest = maxRest;
+		stamina = maxStamina;
 		StartCoroutine(IEDrain());
 	}
 	
@@ -55,19 +56,38 @@ public class UAgentMetabolism : MonoBehaviour {
 		
 	}
 
+// FUNCTIONS
+//------------------------------------------------------------------------------
 	IEnumerator IEDrain() {
 		yield return new WaitForSeconds(deltaTime);
 
 		while (true) {
-			nutrition -= hungerPerSecond * deltaTime;
-			nutrition = Mathf.Max(nutrition, 0);
+			satiation -= hungerPerSecond * deltaTime;
+			satiation = Mathf.Max(satiation, 0);
 			hydration -= thirstPerSecond * deltaTime;
 			hydration = Mathf.Max(hydration, 0);
 			rest -= tirePerSecond * deltaTime;
 			rest = Mathf.Max(rest, 0);
+			stamina += staminaPerSecond * deltaTime;
+			stamina = Mathf.Min(stamina, maxStamina);
 
 			yield return new WaitForSeconds(deltaTime);
         }
+    }
+
+	public void ModifyStats(float satiation = 0, float hydration=0, float rest=0, float stamina=0) {
+		this.satiation += satiation;
+		this.satiation = Mathf.Clamp(this.satiation, 0, maxSatiation);
+		this.hydration += hydration;
+		this.hydration = Mathf.Clamp(this.hydration, 0, maxHydration);
+		this.rest += rest;
+		this.rest = Mathf.Clamp(this.rest, 0, rest);
+		this.stamina += stamina;
+		this.stamina = Mathf.Clamp(this.stamina, 0, stamina);
+	}
+
+	public void ApplyNutrution(Nutrition nutrition) {
+		ModifyStats(nutrition.satiation, nutrition.hydration, 0, 0);
     }
 }
 //==============================================================================

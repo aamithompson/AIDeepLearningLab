@@ -2,7 +2,7 @@
 // Filename: Statistics.cs
 // Author: Aaron Thompson
 // Date Created: 7/20/2021
-// Last Updated: 9/4/2021
+// Last Updated: 1/10/2022
 //
 // Description:
 //==============================================================================
@@ -12,6 +12,11 @@ using UnityEngine;
 using lmath;
 //------------------------------------------------------------------------------
 namespace statistics {
+public enum Distribution {
+	Uniform,
+	Gaussian
+};
+
 public static class Statistics {
 // CORRECT/ERROR
 //------------------------------------------------------------------------------
@@ -118,7 +123,7 @@ public static class Statistics {
     //Marsaglia Polar Method
     private static float spare;
     private static bool hasSpare = false;
-    public static float randomN(float mean, float stdDev) {
+    public static float randomN(float mean, float stdDev, bool parallel=false) {
         if(hasSpare) {
             hasSpare = false;
             return spare * stdDev + mean;
@@ -126,8 +131,14 @@ public static class Statistics {
 
         float u, v, s;
         do {
-            u = UnityEngine.Random.Range(-1.0f, 1.0f);
-            v = UnityEngine.Random.Range(-1.0f, 1.0f);
+            if(parallel) { 
+                u = ParallelRandom.NextFloat(-1.0f, 1.0f);
+                v = ParallelRandom.NextFloat(-1.0f, 1.0f);
+            } else {
+                u = UnityEngine.Random.Range(-1.0f, 1.0f);
+                v = UnityEngine.Random.Range(-1.0f, 1.0f);
+            }
+
             s = u * u + v * v;
         } while (s >= 1 || s <= 0.0000000001f);
 

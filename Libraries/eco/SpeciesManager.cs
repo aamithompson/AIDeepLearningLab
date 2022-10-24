@@ -2,7 +2,7 @@
 // Filename: SpeciesManager.cs
 // Author: Aaron Thompson
 // Date Created: 2/19/2021
-// Last Updated: 3/3/2021
+// Last Updated: 7/18/2022
 //
 // Description:
 //==============================================================================
@@ -13,12 +13,31 @@ using lmath;
 
 public class SpeciesManager : MonoBehaviour {
 	public List<Species> species;
+	public List<GameObject> groups;
 
-	void Start() {
+	public Dictionary<string, int> speciesDict;
 
-	}
+	public void Initialize() {
+		if (groups != null) {
+			ClearCreatures();
+		}
 
-	public GameObject InstantiateCreature(int i) {
+		speciesDict = new Dictionary<string, int>();
+		groups = new List<GameObject>();
+
+		for(int i = 0; i < species.Count; i++) {
+			//Names
+			speciesDict.Add(species[i].name, i);
+
+			//Group
+			GameObject group = Instantiate(new GameObject());
+			group.transform.position = transform.position;
+			group.transform.parent = transform;
+			groups.Add(group);
+        }
+    }
+
+    public GameObject InstantiateCreature(int i) {
 		int n = species[i].presets.Count;
 		Vector values = Vector.Random(Vector.Zeros(n), Vector.Ones(n));
 		values += new Vector(species[i].bias.ToArray());
@@ -46,7 +65,7 @@ public class SpeciesManager : MonoBehaviour {
 		}
 
 		gameObject.AddComponent<UAgentCore>();
-		gameObject.transform.parent = transform;
+		gameObject.transform.parent = groups[i].transform;
 
 		return gameObject;
 	}
@@ -77,13 +96,16 @@ public class SpeciesManager : MonoBehaviour {
     }
 
 	public void ClearCreatures() {
-		foreach(Transform child in transform) {
-			Destroy(child.gameObject);
+		foreach(Transform group in transform) {
+			foreach(Transform child in group) {
+				Destroy(child.gameObject);
+			}
         }
     }
 
 	[System.Serializable]
 	public class Species{
+		public string name;
 		public List<GameObject> presets;
 		public List<float> bias;
 	}

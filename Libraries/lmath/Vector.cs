@@ -116,8 +116,20 @@ public class Vector : LArray {
 
 	//RANDOM
 	public static Vector Random(Vector min, Vector max) {
-		Vector vector = new Vector(min);
+		Vector vector = Vector.Zeros(min.length);
 		vector.Randomize(min, max);
+		return vector;
+	}
+
+	public static Vector Random(float min, float max, int n) {
+		Vector vector = Vector.Zeros(n);
+		vector.Randomize(min, max);
+		return vector;
+	}
+
+	public static Vector RandomN(Vector mean, Vector stdDev) {
+		Vector vector = Vector.Zeros(mean.length);
+		vector.RandomizeN(mean, stdDev);
 		return vector;
 	}
 

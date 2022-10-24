@@ -2,7 +2,7 @@
 // Filename: UAgentGlobalManager.cs
 // Author: Aaron Thompson
 // Date Created: 8/16/2020
-// Last Updated: 8/16/2020
+// Last Updated: 2/14/2022
 //
 // Description:
 //==============================================================================
@@ -14,6 +14,7 @@ public class UAgentGlobalManager : MonoBehaviour {
 // VARIABLES
 //------------------------------------------------------------------------------
 	public List<GameObject> agents;
+	public Dictionary<string, List<GameObject>> consumables;
 
 	[Range(0.001f, 2.0f)]
 	public float updateDeltaTime = 0.25f;
@@ -22,6 +23,7 @@ public class UAgentGlobalManager : MonoBehaviour {
 //------------------------------------------------------------------------------
 	void Awake() {
 		agents = new List<GameObject>();
+		consumables = new Dictionary<string, List<GameObject>>();
 		StartCoroutine(IEUpdateList());
 	}
 
@@ -36,11 +38,21 @@ public class UAgentGlobalManager : MonoBehaviour {
 // MANAGE
 //------------------------------------------------------------------------------
 	private void UpdateList() {
-		UAgentCore[] temp = FindObjectsOfType<UAgentCore>();
+		UAgentCore[] aTemp = FindObjectsOfType<UAgentCore>();
+		Consumable[] cTemp = FindObjectsOfType<Consumable>();
 
 		agents.Clear();
-		for(int i = 0; i < temp.Length; i++) {
-			agents.Add(temp[i].gameObject);
+		for(int i = 0; i < aTemp.Length; i++) {
+			agents.Add(aTemp[i].gameObject);
+		}
+
+		consumables.Clear();
+		for(int i = 0; i < cTemp.Length; i++) {
+			if(!consumables.ContainsKey(cTemp[i].id)) {
+				consumables.Add(cTemp[i].id, new List<GameObject>());
+			}
+
+			consumables[cTemp[i].id].Add(gameObject);
 		}
 	}
 
@@ -51,5 +63,6 @@ public class UAgentGlobalManager : MonoBehaviour {
 		}
 	}
 }
+
 //==============================================================================
 //==============================================================================

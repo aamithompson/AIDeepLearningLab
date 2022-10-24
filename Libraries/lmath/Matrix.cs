@@ -195,8 +195,20 @@ public class Matrix : LArray {
 
 	//RANDOM
 	public static Matrix Random(Matrix min, Matrix max) {
-		Matrix matrix = new Matrix(min);
+		Matrix matrix = Matrix.Zeros(min.shape[0], min.shape[1]);
 		matrix.Randomize(min, max);
+		return matrix;
+	}
+
+	public static Matrix Random(float min, float max, int m, int n) {
+		Matrix matrix = Matrix.Zeros(m, n);
+		matrix.Randomize(min, max);
+		return matrix;
+	}
+
+	public static Matrix RandomN(Matrix mean, Matrix stdDev) {
+		Matrix matrix = Matrix.Zeros(mean.shape[0], mean.shape[1]);
+		matrix.RandomizeN(mean, stdDev);
 		return matrix;
 	}
 

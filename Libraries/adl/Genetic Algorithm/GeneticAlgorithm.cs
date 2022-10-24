@@ -10,7 +10,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using lmath;
-using ncomp;
+using statistics;
 
 namespace adl {
 public class GeneticAlgorithm {
@@ -18,27 +18,35 @@ public class GeneticAlgorithm {
 //------------------------------------------------------------------------------
 	private List<Individual> population;
 
-	public int populationCount;
-	public Matrix minValueMatrix;
-	public Matrix maxValueMatrix;
-	//TODO implement ENUM for guassian vs uniform
-	public Matrix meanValueMatrix;
-	public Matrix stdDevValueMatrix;
+	//General Settings
+	public Distribution distributionType;
 
+	//Population Settings
+	public int populationCount;
+	public Matrix minValueMatrix; //[UNIFORM]
+	public Matrix maxValueMatrix; //[UNIFORM]
+	public Matrix meanValueMatrix; //[GAUSSIAN]
+	public Matrix stdDevValueMatrix; //[GAUSSIAN]
+
+	//Fitness Settings
 	public System.Func<Matrix, float> fitnessFunction;
 	public Vector fitnessProportions;
 
+	//Crossover Settings
 	public int crossPoints;
 	public int crossOffset;
 
+	//Mutation Settings
 	public float mutationRate;
-	public Matrix minMutationMatrix; //current value +/- mutation value
-	public Matrix maxMutationMatrix; //min and maxes out at value matrices
-	
+	public Matrix minMutationMatrix; //[UNIFORM] //current value +/- mutation value
+	public Matrix maxMutationMatrix; //[UNIFORM] //min and maxes out at value matrices
+	public Matrix meanMutationMatrix; //[GAUSSIAN] //current value +/- mutation value
+	public Matrix stdDevMutationMatrix; //[GAUSSIAN] //min and maxes out at value matrices
 
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public GeneticAlgorithm() {
+		distributionType = Distribution.Uniform;
 		populationCount = 0;
 		minValueMatrix = Matrix.Zeros(1, 1);
 		maxValueMatrix = Matrix.Zeros(1, 1);
@@ -73,8 +81,11 @@ public class GeneticAlgorithm {
 		population = new List<Individual>();
 		fitnessProportions = Vector.Zeros(populationCount);
 		for(int i = 0; i < populationCount; i++) {
-			Individual individual = new Individual(Matrix.Random(minValueMatrix, maxValueMatrix));
-			population.Add(individual);
+			if(distributionType == Distribution.Uniform) {
+				population.Add(new Individual(Matrix.Random(minValueMatrix, maxValueMatrix)));
+            } else if (distributionType == Distribution.Gaussian) {
+				population.Add(new Individual(Matrix.RandomN(meanValueMatrix, stdDevValueMatrix)));
+            }
 		}
 	}
 	
@@ -216,25 +227,32 @@ public class GeneticAlgorithm {
 		for(int i = 0; i < population[index].data.GetLength(); i++) {
 			float rvalue = (parallel) ? ParallelRandom.NextFloat() : UnityEngine.Random.value;
 
-				if (rvalue < mutationRate) {
+			if (rvalue < mutationRate) {
+				if(distributionType == Distribution.Uniform) {
 					float minValue;
 					float maxValue;
-					if (minMutationMatrix.Norm() == 0f && maxMutationMatrix.Norm() == 0f) {
+					if (minMutationMatrix.Norm() == 0f && maxMutationMatrix.Norm() == 0f)
+					{
 						minValue = minValueMatrix[i];
 						maxValue = maxValueMatrix[i];
 					} else {
 						minValue = population[index].data[i] + minMutationMatrix[i];
-						if (minValue < minValueMatrix[i]) {
+						if (minValue < minValueMatrix[i])
+						{
 							minValue = minValueMatrix[i];
 						}
-					
+
 						maxValue = population[index].data[i] + maxMutationMatrix[i];
-						if (maxValue > maxValueMatrix[i]) {
+						if (maxValue > maxValueMatrix[i])
+						{
 							maxValue = maxValueMatrix[i];
 						}
-				}
+					}
 
-				population[index].data[i] = (parallel) ? ParallelRandom.NextFloat(minValue, maxValue) : UnityEngine.Random.Range(minValue, maxValue);
+					population[index].data[i] = (parallel) ? ParallelRandom.NextFloat(minValue, maxValue) : UnityEngine.Random.Range(minValue, maxValue);
+				}
+			} else if (distributionType == Distribution.Gaussian) {
+				population[index].data[i] += Statistics.randomN(meanMutationMatrix[i], stdDevMutationMatrix[i], parallel);
 			}
 		}
 	}

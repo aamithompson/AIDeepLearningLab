@@ -59,12 +59,12 @@ public class DataSet {
 
     public List<Data> GetNextBatch(int batchSize) {
         List<Data> batch = new List<Data>();
-        if(index + batchSize >= dataSet.Count) {
+        if(index + batchSize > dataSet.Count) {
             Shuffle();
         }
 
         for(int i = 0; i < batchSize; i++) {
-            batch.Add(new Data(dataSet[i]));
+            batch.Add(new Data(dataSet[i+index]));
         }
 
         index += batchSize;
@@ -75,7 +75,7 @@ public class DataSet {
         List<List<Data>> epoch = new List<List<Data>>();
 
         Shuffle();
-        while(index + batchSize < dataSet.Count) {
+        while(index + batchSize <= dataSet.Count) {
             epoch.Add(GetNextBatch(batchSize));
         }
 

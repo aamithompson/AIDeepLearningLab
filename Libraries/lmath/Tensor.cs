@@ -118,8 +118,20 @@ public class Tensor : LArray {
 
 	//RANDOM
 	public static Tensor Random(Tensor min, Tensor max) {
-		Tensor tensor = new Tensor(min);
+		Tensor tensor = Tensor.Zeros(min.shape);
 		tensor.Randomize(min, max);
+		return tensor;
+	}
+
+	public static Tensor Random(float min, float max, int[] shape) {
+		Tensor tensor = Tensor.Zeros(shape);
+		tensor.Randomize(min, max);
+		return tensor;
+	}
+
+	public static Tensor RandomN(Tensor mean, Tensor stdDev) {
+		Tensor tensor = Tensor.Zeros(mean.shape);
+		tensor.RandomizeN(mean, stdDev);
 		return tensor;
 	}
 

@@ -388,15 +388,29 @@ public abstract class LArray {
 		for(int i = 0; i < data.Length; i++) {
 			float minValue = minData[i];
 			float maxValue = maxData[i];
-			float e = UnityEngine.Random.Range(minValue, maxValue);
-			data[i] = e;
+			data[i] = UnityEngine.Random.Range(minValue, maxValue);
 		}
+	}
+
+	public void Randomize(float min, float max) {
+		for(int i = 0; i < data.Length; i++) { 
+			data[i] = UnityEngine.Random.Range(min, max);
+		}
+	}
+
+	public void RandomizeN(LArray mean, LArray stdDev) {
+		float[] meanData = mean.AccessData();
+		float[] stdDevData = stdDev.AccessData();
+		for(int i = 0; i < data.Length; i++) {
+			float meanValue = meanData[i];
+			float stdDevValue = stdDevData[i];
+			data[i] = Statistics.randomN(meanValue, stdDevValue);
+        }
 	}
 
 	public void RandomizeN(float mean, float stdDev) {
 		for(int i = 0; i < data.Length; i++) {
-			float e = Statistics.randomN(mean, stdDev);
-			data[i] = e;
+			data[i] = Statistics.randomN(mean, stdDev);
 		}
 	}
 

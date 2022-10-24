@@ -2,7 +2,7 @@
 // Filename: FFEvoNeuralNetwork.cs
 // Author: Aaron Thompson
 // Date Created: 8/26/2021
-// Last Updated: 9/2/2021
+// Last Updated: 1/12/2022
 //
 // Description:
 //==============================================================================
@@ -22,20 +22,35 @@ public class FFEvoNeuralNetwork {
     public List<Vector> xTest;
     public List<Vector> yTest;
     
-    public float minWeight;
-    public float maxWeight;
-    public float minBias;
-    public float maxBias;
-    public float minWeightMutation;
-    public float maxWeightMutation;
-    public float minBiasMutation;
-    public float maxBiasMutation;
+    //Weight Value Settings
+    public float minWeight; //[UNIFORM]
+    public float maxWeight; //[UNIFORM]
+    public float meanWeight; //[GAUSSIAN]
+    public float stdDevWeight; //[GAUSSIAN]
+    
+    //Bias Value Settings
+    public float minBias; //[UNIFORM]
+    public float maxBias; //[UNIFORM]
+    public float meanBias; //[GAUSSIAN]
+    public float stdDevBias; //[GAUSSIAN]
+
+    //Mutation Weight Settings
+    public float minWeightMutation; //[UNIFORM]
+    public float maxWeightMutation; //[UNIFORM]
+    public float meanWeightMutation; //[GAUSSIAN]
+    public float stdDevWeightMutation; //[GAUSSIAN]
+
+    //Mutation Bias Settings
+    public float minBiasMutation; //[UNIFORM]
+    public float maxBiasMutation; //[UNIFORM]
+    public float meanBiasMutation; //[GAUSSIAN]
+    public float stdDevBiasMutation; //[GAUSSIAN]
+
     public float mutationRate;
-    //public float minCrossoverPercent;
-    //public float maxCrossoverPercent;
     public int crossPoints;
     public int crossOffset;
     public int population;
+    public Distribution distributionType;
 
     public FFEvoNeuralNetwork() {
         NN = new FFNeuralNetwork();
@@ -65,8 +80,6 @@ public class FFEvoNeuralNetwork {
 
     public void SGD(List<Vector> x, List<Vector> y, int epochs=1, int miniBatchSize=10, bool parallel=true) {
         DataSet dataSet = new DataSet(x, y);
-        //StreamWriter writer = new StreamWriter("D:\\Users\\aamit\\Documents\\Programming\\Artificial Intelligence\\AI Deep Learning Lab V3\\Data" + "\\test.txt", true);
-        //writer.AutoFlush = true;
 
         if (!GASizeCorrect()) {
             UpdateGA();
@@ -103,16 +116,11 @@ public class FFEvoNeuralNetwork {
                 for (int j = 0; j < yTest.Count; j++) {
                     yData.Add(NN.Activate(xTest[j]));
                 }
-
-                //string line = "[" + (k*batches[0].Count + i + 1).ToString() + "] Accuracy: " + Statistics.Accuracy(yData, yTest).ToString() + "%";
-                //writer.WriteLine(line);
             }
 
 
 			Debug.Log("[Neural Network] Epoch [" + (k+1).ToString() + "] / [" + epochs.ToString() + "] complete. (Batch Size: " + miniBatchSize.ToString() + ")");
         }
-
-        //writer.Close();
 
         Matrix best = GA.GetBestFit()[0];
         int index = 0;
@@ -170,19 +178,25 @@ public class FFEvoNeuralNetwork {
         return n == GA.minValueMatrix.GetLength();
     }
 
-        public void UpdateGA() {
-            int nW = 0;
-            int nB = 0;
+    public void UpdateGA() {
+        int nW = 0;
+        int nB = 0;
 
-            for (int i = 0; i < NN.weights.Count; i++) {
-                nW += NN.weights[i].GetLength();
-                nB += NN.biases[i].GetLength();
-            }
+        for (int i = 0; i < NN.weights.Count; i++) {
+            nW += NN.weights[i].GetLength();
+            nB += NN.biases[i].GetLength();
+        }
 
+        GA.distributionType = distributionType;
+        if(distributionType == Distribution.Uniform) {
             GA.minValueMatrix = Matrix.Zeros(nW + nB, 1);
             GA.maxValueMatrix = Matrix.Zeros(nW + nB, 1);
             GA.minMutationMatrix = Matrix.Zeros(nW + nB, 1);
             GA.maxMutationMatrix = Matrix.Zeros(nW + nB, 1);
+            GA.meanValueMatrix = new Matrix();
+            GA.stdDevValueMatrix = new Matrix();
+            GA.meanMutationMatrix = new Matrix();
+            GA.stdDevMutationMatrix = new Matrix();
 
             for (int i = 0; i < nW; i++) {
                 GA.minValueMatrix[i] = minWeight;
@@ -197,16 +211,38 @@ public class FFEvoNeuralNetwork {
                 GA.minMutationMatrix[i] = minBiasMutation;
                 GA.maxMutationMatrix[i] = maxBiasMutation;
             }
+        } else if(distributionType == Distribution.Gaussian) {
+            GA.minValueMatrix = new Matrix();
+            GA.maxValueMatrix = new Matrix();
+            GA.minMutationMatrix = new Matrix();
+            GA.maxMutationMatrix = new Matrix();
+            GA.meanValueMatrix = Matrix.Zeros(nW + nB, 1);
+            GA.stdDevValueMatrix = Matrix.Zeros(nW + nB, 1);
+            GA.meanMutationMatrix = Matrix.Zeros(nW + nB, 1);
+            GA.stdDevMutationMatrix = Matrix.Zeros(nW + nB, 1);
 
-            GA.mutationRate = mutationRate;
-            //GA.minCrossoverPercent = minCrossoverPercent;
-            //GA.maxCrossoverPercent = maxCrossoverPercent;
-            GA.crossPoints = crossPoints;
-            GA.crossOffset = crossOffset;
-            GA.populationCount = population;
+            for (int i = 0; i < nW; i++) {
+                GA.meanValueMatrix[i] = meanWeight;
+                GA.stdDevValueMatrix[i] = stdDevWeight;
+                GA.meanMutationMatrix[i] = meanWeightMutation;
+                GA.stdDevMutationMatrix[i] = stdDevWeightMutation;
+            }
 
-            GA.Populate();
+            for (int i = nW; i < nW + nB; i++) {
+                GA.meanValueMatrix[i] = meanBias;
+                GA.stdDevValueMatrix[i] = stdDevBias;
+                GA.meanMutationMatrix[i] = meanBiasMutation;
+                GA.stdDevMutationMatrix[i] = stdDevBiasMutation;
+            }
         }
+
+        GA.mutationRate = mutationRate;
+        GA.crossPoints = crossPoints;
+        GA.crossOffset = crossOffset;
+        GA.populationCount = population;
+
+        GA.Populate();
+    }
 }
 }// END namespace adl
 //==============================================================================

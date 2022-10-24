@@ -16,7 +16,7 @@ public class UAgentSensor : MonoBehaviour {
 // VARIABLES
 //------------------------------------------------------------------------------
 	//AGENT COMPONENT(s)
-	public UAgentCore uagentCore;
+	public UAgentCore uAgentCore;
 
 	//DATA
 	public static int sightVectorSize = 6;
@@ -86,8 +86,8 @@ public class UAgentSensor : MonoBehaviour {
 			UpdateSightData();
 			sightData.Fill(0.0f);
 
-			for(int i = 0; i < uagentCore.uagentManager.agents.Count; i++) {
-				GameObject gb = uagentCore.uagentManager.agents[i];
+			for(int i = 0; i < uAgentCore.uAgentManager.agents.Count; i++) {
+				GameObject gb = uAgentCore.uAgentManager.agents[i];
 				if(gb == null) {
 					continue;
                 }
@@ -135,10 +135,23 @@ public class UAgentSensor : MonoBehaviour {
 		Vector2 foward = new Vector2(transform.forward.x, transform.forward.z);
 		Vector2 target = new Vector2(gb.transform.position.x, gb.transform.position.z);
 
-		float distance = Vector2.Distance(origin, target);
+		/*float distance = Vector2.Distance(origin, target);
 		float angle = Vector2.SignedAngle(foward.normalized, (target - origin).normalized) * -1;
 
 		if (((distance < maxSightRadius) && (distance > minSightRadius)) && ((angle > oLSAngle * -1) && (angle < oRSAngle))) {
+			int column = Mathf.FloorToInt(columns * ((angle + oLSAngle) / (oLSAngle + oRSAngle)));
+			int row = Mathf.FloorToInt(rows * ((distance - minSightRadius) / (maxSightRadius - minSightRadius)));
+			row = Clamp<int>(row, 0, rows);
+			column = Clamp<int>(column, 0, columns);
+			return new Vector(new float[] { row, column });
+		}*/
+
+		//Faster distance calculation for comparison
+		float distance = (origin - target).sqrMagnitude;
+		float angle = Vector2.SignedAngle(foward.normalized, (target - origin).normalized) * -1;
+
+		if (((distance < maxSightRadius * maxSightRadius) && (distance > minSightRadius * minSightRadius)) && ((angle > oLSAngle * -1) && (angle < oRSAngle))) {
+			distance = Mathf.Sqrt(distance);
 			int column = Mathf.FloorToInt(columns * ((angle + oLSAngle) / (oLSAngle + oRSAngle)));
 			int row = Mathf.FloorToInt(rows * ((distance - minSightRadius) / (maxSightRadius - minSightRadius)));
 			row = Clamp<int>(row, 0, rows);

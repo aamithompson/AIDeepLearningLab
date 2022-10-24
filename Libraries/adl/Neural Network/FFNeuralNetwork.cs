@@ -2,7 +2,7 @@
 // Filename: FFNeuralNetwork.cs
 // Author: Aaron Thompson
 // Date Created: 12/9/2020
-// Last Updated: 11/16/2021
+// Last Updated: 8/1/2022
 //
 // Description:
 //==============================================================================
@@ -53,9 +53,9 @@ public class FFNeuralNetwork {
 			AddLayer(op, -1, 1, sizeY);
 	}
 
-		// DATA MANAGEMENT
-		//------------------------------------------------------------------------------
-		public void AddLayer(Operation op, int i=-1, int n=1, int width=1) {
+// DATA MANAGEMENT
+//------------------------------------------------------------------------------
+	public void AddLayer(Operation op, int i=-1, int n=1, int width=1) {
 		if(i == -1) {
 			if(depth < 2) {
 				network.Add(new List<Neuron>());
@@ -297,6 +297,7 @@ public class FFNeuralNetwork {
 
 			Debug.Log("[Neural Network] Epoch [" + (k+1).ToString() + "] / [" + epochs.ToString() + "] complete. (Batch Size: " + miniBatchSize.ToString() + ", Learning Rate: " + learningRate.ToString() + ")");
         }
+
     }
 
 	public void TrainMiniBatch(List<Vector> x, List<Vector> y, float learningRate=1.00f, bool parallel=true) {
