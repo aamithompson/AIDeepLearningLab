@@ -2,7 +2,7 @@
 // Filename: Heap.cs
 // Author: Aaron Thompson
 // Date Created: 10/9/2021
-// Last Updated: 10/9/2021
+// Last Updated: 10/18/2021
 //
 // Description:
 //==============================================================================
@@ -60,6 +60,8 @@ public class Heap<T> where T : IHeapElement<T>{
             } else {
                 break;
             }
+
+            parentIndex = (e.HeapIndex - 1) / 2;
         }
     }
 

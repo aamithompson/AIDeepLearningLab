@@ -12,12 +12,12 @@ using UnityEngine;
 using adl;
 using lmath;
 using statistics;
-
+//------------------------------------------------------------------------------
 [RequireComponent(typeof(EcoSpawnManager))]
 [RequireComponent(typeof(SpeciesManager))]
 public class EcoTrainer : MonoBehaviour {
-    // VARIABLES
-    //------------------------------------------------------------------------------
+// VARIABLES
+//------------------------------------------------------------------------------
     private EcoSpawnManager ecoSpawnManager;
     private SpeciesManager speciesManager;
 
@@ -88,9 +88,11 @@ public class EcoTrainer : MonoBehaviour {
         }
 
         //Algorithm Settings
-        if(algoSettings != null) {
-            int index = algoSettingsDict["_DEFAULT"];
-            algoSettings.RemoveAt(index);
+        if(algoSettingsDict != null) {
+            if (algoSettingsDict.ContainsKey("_DEFAULT")) {
+                int index = algoSettingsDict["_DEFAULT"];
+                algoSettings.RemoveAt(index);
+            }
         }
 
         algoSettings.Add(new SpeciesAlgorithmSettings("_DEFAULT", distributionType,
@@ -229,6 +231,10 @@ public class EcoTrainer : MonoBehaviour {
         }
     }
 
+    public void ClearAgents() {
+        speciesManager.ClearCreatures();
+    }
+
 // TRAINNING FUNCTIONS
 //------------------------------------------------------------------------------
     public void Populate() {
@@ -255,6 +261,7 @@ public class EcoTrainer : MonoBehaviour {
             iSpec++;
         }
 
+        ClearAgents();
         InstantiateAgents();
         UpdateAgents();
     }
@@ -277,7 +284,7 @@ public class EcoTrainer : MonoBehaviour {
     public void Stop() {
         running = false;
 
-        speciesManager.ClearCreatures();
+        ClearAgents();
     }
 
 // SAVING/LOADING
