@@ -16,7 +16,7 @@ public class UAgentCombat : MonoBehaviour {
 //------------------------------------------------------------------------------
     //AGENT COMPONENT(s)
 	public UAgentCore uAgentCore;
-    
+
     //HEALTH
     public float health;
     public float maxHealth;
@@ -38,37 +38,58 @@ public class UAgentCombat : MonoBehaviour {
         UpdateColliders();
     }
 
-    private void FixedUpdate() {
+    void FixedUpdate() {
+
+    }
+
+// FUNCTIONS
+//------------------------------------------------------------------------------
+    public void CombatMove(int i=-1) {
+        if(i != -1 && currentAction != i) {
+            step = 0;
+            time = 0;
+            currentAction = i;
+        }
+
         if(currentAction >= 0) {
-            if(time > cActions[currentAction].moveSteps[step].time) {
+            if (time > cActions[currentAction].moveSteps[step].time) {
                 step++;
-                basePosition = transform.position;
+                //basePosition = transform.position;
                 time = 0;
-                if(step > cActions[currentAction].moveSteps.Count - 1) {
+                displacement = Vector3.zero;
+                if (step > cActions[currentAction].moveSteps.Count - 1) {
                     step = 0;
                     currentAction = -1;
+                    return;
                 }
             }
 
 
-            if(step < cActions[currentAction].moveSteps.Count) {
+            if (step < cActions[currentAction].moveSteps.Count) {
                 float t = (cActions[currentAction].moveSteps[step].time <= 0) ?
                     1.0f :
-                    time/cActions[currentAction].moveSteps[step].time;
+                    time / cActions[currentAction].moveSteps[step].time;
                 Vector3 offset = Vector3.Lerp(Vector3.zero, cActions[currentAction].moveSteps[step].movement, t);
+                float xMagnitude = Vector3.Scale(offset, Vector3.right).magnitude;
+                float zMagnitude = Vector3.Scale(offset, Vector3.forward).magnitude;
+                offset = (transform.right * xMagnitude) + (transform.up * offset.y) + (transform.forward * zMagnitude);
 
                 transform.position += offset - displacement;
                 displacement = offset;
             }
 
             time += Time.fixedDeltaTime;
-        } else {
+        }/* else {
             basePosition = transform.position;
-        }
+        }*/
     }
 
-// FUNCTIONS
-//------------------------------------------------------------------------------
+    public void CombatMove(Vector3 direction, int i=-1) {
+        direction = direction.normalized;
+        transform.rotation = Quaternion.LookRotation(direction);
+        CombatMove(i);
+    }
+    
     public void RecieveDamage(float damage) {
         health -= damage;
         health = Mathf.Min(health, maxHealth);

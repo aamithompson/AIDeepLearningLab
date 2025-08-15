@@ -17,7 +17,11 @@ public class SpeciesManager : MonoBehaviour {
 
 	public Dictionary<string, int> speciesDict;
 
-	public void Initialize() {
+    void Start() {
+		Initialize();
+    }
+
+    public void Initialize() {
 		if (groups != null) {
 			ClearCreatures();
 		}
@@ -52,13 +56,13 @@ public class SpeciesManager : MonoBehaviour {
 		Renderer renderer = gameObject.GetComponent<Renderer>();
 		Renderer presetRenderer = species[i].presets[0].GetComponent<Renderer>();
 		Vector3 presetScale = species[i].presets[0].transform.localScale * values[0];
-		Color presetColor = presetRenderer.material.color * values[0];
+		Color presetColor = presetRenderer.sharedMaterial.color * values[0];
 		gameObject.transform.localScale = presetScale;
 		renderer.material.color = presetColor;
 		for (int j = 1; j < n; j++) {
 			presetRenderer = species[i].presets[j].GetComponent<Renderer>();
 			presetScale = species[i].presets[j].transform.localScale * values[j];
-			presetColor = presetRenderer.material.color * values[j];
+			presetColor = presetRenderer.sharedMaterial.color * values[j];
 
 			gameObject.transform.localScale = gameObject.transform.localScale + presetScale;
 			renderer.material.color = renderer.material.color + presetColor;
@@ -66,6 +70,7 @@ public class SpeciesManager : MonoBehaviour {
 
 		gameObject.AddComponent<UAgentCore>();
 		gameObject.transform.parent = groups[i].transform;
+		gameObject.name = gameObject.name.Replace("(Clone)", "").Trim();
 
 		return gameObject;
 	}

@@ -16,11 +16,15 @@ public static class Lexicon {
 //------------------------------------------------------------------------------
 	//Map
 	public static Dictionary<string, Dictionary<string, int[]>> cmdMap;
+	public static Dictionary<string, int> ctiMap; //category to index map
+	public static Dictionary<int, string> itcMap; //index to category map
 
 // FUNCTIONS
 //------------------------------------------------------------------------------
 	public static void Initalize() {
 		cmdMap = new Dictionary<string, Dictionary<string, int[]>>();
+		ctiMap = new Dictionary<string, int>();
+		itcMap = new Dictionary<int, string>();
 
 		//Categories
 		//Component Order
@@ -41,16 +45,35 @@ public static class Lexicon {
 		cmdMap.Add("Data", new Dictionary<string, int[]>());
 		cmdMap.Add("Cognition", new Dictionary<string, int[]>());
 
+		ctiMap.Add("Core", 1);
+		ctiMap.Add("Sensor", 2);
+		ctiMap.Add("Diet", 3);
+		ctiMap.Add("Metabolism", 4);
+		ctiMap.Add("Movement", 5);
+		ctiMap.Add("Combat", 6);
+		ctiMap.Add("Data", 7);
+		ctiMap.Add("Cognition", 8);
+
+		itcMap.Add(1, "Core");
+		itcMap.Add(2, "Sensor");
+		itcMap.Add(3, "Diet");
+		itcMap.Add(4, "Metabolism");
+		itcMap.Add(5, "Movement");
+		itcMap.Add(6, "Combat");
+		itcMap.Add(7, "Data");
+		itcMap.Add(8, "Cognition");
+
 		//Metabolism
-		cmdMap["Diet"].Add("Consume", new int[] { 3, 1, 1});
+		cmdMap["Diet"].Add("Consume", new int[] { 3, 0, 1});
 
 		//Movement
 		//(x, y, z) = 3
-		cmdMap["Movement"].Add("Move", new int[] { 5, 1, 3});
+		cmdMap["Movement"].Add("Move", new int[] { 5, 0, 3});
+		cmdMap["Movement"].Add("Turn", new int[] { 5, 1, 1});
 
 		//Combat
 		//(x, y, z) = 3
-		cmdMap["Combat"].Add("CombatMove", new int[] { 6, 1, 3 });
+		cmdMap["Combat"].Add("CombatMove", new int[] { 6, 0, 3 });
 	}
 
 // ClASSES/STRUCTS

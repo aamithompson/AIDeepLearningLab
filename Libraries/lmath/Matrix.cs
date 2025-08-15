@@ -2,17 +2,26 @@
 // Filename: Matrix.cs
 // Author: Aaron Thompson
 // Date Created: 5/31/2020
-// Last Updated: 11/29/2021
+// Last Updated: 8/14/2025
 //
 // Description:
+//  Resource for optimizing matrix multiplication:
+//  https://www.youtube.com/watch?v=o7h_sYMk_oc
 //==============================================================================
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace lmath {
+
+//Some considerations:
+//Implement tiling block matrices for optimal cache ~32 x 32
+//Implement L2 cache tiling
+//Implement divide and conquer block matrix multiplication
 public class Matrix : LArray {
-	public static int STRASSEN_MATRIX_SIZE = 128*128;
+	public static int STRASSEN_MATRIX_SIZE = 512*512;
+	public static int BLOCK_MATRIX_SIZE = 32;
 
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
@@ -218,19 +227,23 @@ public class Matrix : LArray {
 		return matrix;
 	}
 
-	//MATRIX MULTIPLICATION
-	//TODO : ERROR if A.shape[1] != B.shape[0]
-    public static Matrix MatMul(Matrix A, Matrix B) {
+
+	public static Matrix MatMul(Matrix A, Matrix B, bool parallel=false) {
 		// (m x n) X (n x p) -> m x p
 		int m = A.GetShape()[0];
 		int n = A.GetShape()[1];
 		int p = B.GetShape()[1];
 		Matrix C = Zeros(m, p);
-		
+
+		//Pre-Transpose Optimization
+		B = Matrix.Transpose(B);
+
         float[] arrA = A.AccessData();
         float[] arrB = B.AccessData();
 		float[] arrC = C.AccessData();
-		for(int i = 0; i < m; i++) {
+
+		//Naive Implementation
+		/*for(int i = 0; i < m; i++) {
 			for(int j = 0; j < p; j++) {
 				float sum = 0;
 				for(int k = 0; k < n; k++){
@@ -241,15 +254,81 @@ public class Matrix : LArray {
 
 				arrC[(i * p) + j] = sum;
 			}
+		}*/
+
+		if(parallel) {
+			int iblocks = (m/BLOCK_MATRIX_SIZE) + 1;
+			int kblocks = (p/BLOCK_MATRIX_SIZE) + 1;
+			Parallel.For(0, iblocks, iblock => {
+				int ib = iblock * BLOCK_MATRIX_SIZE;
+				int iMax = Mathf.Min(ib + BLOCK_MATRIX_SIZE, m);
+				Parallel.For(0, kblocks, kblock => {
+					int kb = iblock * BLOCK_MATRIX_SIZE;
+					int kMax = Mathf.Min(kb + BLOCK_MATRIX_SIZE, n);
+					for(int jb = 0; jb < p; jb += BLOCK_MATRIX_SIZE) {
+						int jMax = Mathf.Min(jb + BLOCK_MATRIX_SIZE, p);
+						for(int i = ib; i < iMax; i++) {
+							for(int k = kb; k < kMax; k++) {
+								for(int j = jb; j < jMax; j++) {
+									arrC[(i * p) + j] += arrA[(i * n) + k] * arrB[(j * n) + k];
+								}
+							}
+						}
+					}
+				});
+			});
+		} else {
+			for(int ib = 0; ib < m; ib += BLOCK_MATRIX_SIZE) {
+				int iMax = Mathf.Min(ib + BLOCK_MATRIX_SIZE, m);
+				for(int kb = 0; kb < n; kb += BLOCK_MATRIX_SIZE) {
+					int kMax = Mathf.Min(kb + BLOCK_MATRIX_SIZE, n);
+					for(int jb = 0; jb < p; jb += BLOCK_MATRIX_SIZE) {
+						int jMax = Mathf.Min(jb + BLOCK_MATRIX_SIZE, p);
+						for(int i = ib; i < iMax; i++) {
+							for(int k = kb; k < kMax; k++) {
+								for(int j = jb; j < jMax; j++) {
+									arrC[(i * p) + j] += arrA[(i * n) + k] * arrB[(j * n) + k];
+								}
+							}
+						}
+					}
+                }
+            }
+		}
+
+		//Reversing Transposition
+		B = Matrix.Transpose(B);
+
+		return C;
+	}
+
+
+
+	public static Matrix NaiveMul(Matrix A, Matrix B) {
+		int m = A.GetShape()[0];
+		int n = A.GetShape()[1];
+		int p = B.GetShape()[1];
+		Matrix C = Zeros(m, p);
+
+		float[] arrA = A.AccessData();
+		float[] arrB = B.AccessData();
+		float[] arrC = C.AccessData();
+
+		for (int i = 0; i < m; i++) {
+			for (int j = 0; j < p; j++) {
+				for (int k = 0; k < n; k++) {
+					arrC[(i * p) + j] += arrA[(i * n) + k] * arrB[(k * p) + j];
+				}
+			}
 		}
 
 		return C;
 	}
 	
 	//https://en.wikipedia.org/wiki/Strassen_algorithm
-	public static Matrix StrassenMul(Matrix A, Matrix B) {
+	public static Matrix StrassenMul(Matrix A, Matrix B, bool parallel=true) {
 		if(A.GetLength() < STRASSEN_MATRIX_SIZE && B.GetLength() < STRASSEN_MATRIX_SIZE) {
-			return MatMul(A, B);
+			return MatMul(A, B, parallel);
         }
 
 		int m = A.GetShape()[0];
@@ -272,13 +351,36 @@ public class Matrix : LArray {
 		Matrix B21 = new Matrix(BP.GetSlice(new int[,] { { sd2, s - 1 }, { 0, sd2 - 1 } }), sd2, sd2);
 		Matrix B22 = new Matrix(BP.GetSlice(new int[,] { { sd2, s - 1 }, { sd2, s - 1 } }), sd2, sd2);
 
-		Matrix M1 = Matrix.StrassenMul(A11 + A22, B11 + B22);
-		Matrix M2 = Matrix.StrassenMul(A21 + A22, B11);
-		Matrix M3 = Matrix.StrassenMul(A11, B12 - B22);
-		Matrix M4 = Matrix.StrassenMul(A22, B21 - B11);
-		Matrix M5 = Matrix.StrassenMul(A11 + A12, B22);
-		Matrix M6 = Matrix.StrassenMul(A21 - A11, B11 + B12);
-		Matrix M7 = Matrix.StrassenMul(A12 - A22, B21 + B22);
+		Matrix M1 = new Matrix();
+		Matrix M2 = new Matrix();
+		Matrix M3 = new Matrix();
+		Matrix M4 = new Matrix();
+		Matrix M5 = new Matrix();
+		Matrix M6 = new Matrix();
+		Matrix M7 = new Matrix();
+
+        if (parallel) {
+			Parallel.Invoke(
+				() => M1 = Matrix.StrassenMul(A11 + A22, B11 + B22),
+				() => M2 = Matrix.StrassenMul(A21 + A22, B11),
+				() => M3 = Matrix.StrassenMul(A11, B12 - B22),
+				() => M4 = Matrix.StrassenMul(A22, B21 - B11)
+			);
+
+			Parallel.Invoke(
+				() => M5 = Matrix.StrassenMul(A11 + A12, B22),
+				() => M6 = Matrix.StrassenMul(A21 - A11, B11 + B12),
+				() => M7 = Matrix.StrassenMul(A12 - A22, B21 + B22)
+			);
+		} else {
+			M1 = Matrix.StrassenMul(A11 + A22, B11 + B22);
+			M2 = Matrix.StrassenMul(A21 + A22, B11);
+			M3 = Matrix.StrassenMul(A11, B12 - B22);
+			M4 = Matrix.StrassenMul(A22, B21 - B11);
+			M5 = Matrix.StrassenMul(A11 + A12, B22);
+			M6 = Matrix.StrassenMul(A21 - A11, B11 + B12);
+			M7 = Matrix.StrassenMul(A12 - A22, B21 + B22);
+		}
 		
 		Matrix C11 = M1 + M4 - M5 + M7;
 		Matrix C12 = M3 + M5;

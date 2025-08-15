@@ -23,6 +23,7 @@ public class UAgentMovement : MonoBehaviour {
 	//SETTING(s)
 	public float[] maxHeightDelta;
 	public MovementSettings[] movementSettings;
+	public MovementSettings[] turnSettings;
 	public float waypointRadius;
 
 	//TRANSLATIONAL MOVEMENT
@@ -37,6 +38,7 @@ public class UAgentMovement : MonoBehaviour {
 	public Transform target;
 	public Vector3[] path;
 	public int pathIndex = 0;
+	public int maxNodes = -1;
 
 
 // MONOBEHAVIOR METHODS
@@ -45,7 +47,7 @@ public class UAgentMovement : MonoBehaviour {
 		rb = gameObject.GetComponent<Rigidbody>();
 		rb.freezeRotation = true;
 
-		PathRequestManager.RequestPath(transform.position, target.position, maxHeightDelta, OnPathFound);
+		//PathRequestManager.RequestPath(transform.position, target.position, maxHeightDelta, OnPathFound);
 	}
 
 	void Update() {
@@ -53,9 +55,7 @@ public class UAgentMovement : MonoBehaviour {
 	}
 
 	void FixedUpdate() {
-		if (path != null) {
-			Move(0);
-		}
+
 	}
 
 	public void OnDrawGizmos() {
@@ -89,13 +89,21 @@ public class UAgentMovement : MonoBehaviour {
         }
 
 		//Angular Calculations
-		if (angularVelocity < ms.minAngularVelocity) {
+
+		Vector2 from = new Vector2(transform.forward.x, transform.forward.z);
+		Vector3 to = new Vector2(direction.x, direction.z);
+		int angleDir = (Vector2.SignedAngle(from, to) >= 0) ? -1 : 1;
+		if (angleDir == 1 && angularVelocity < ms.minAngularVelocity) {
 			angularVelocity = ms.minAngularVelocity;
+		} else if(angleDir == -1 && angularVelocity > ms.minAngularVelocity * -1) {
+			angularVelocity = -1 * ms.minAngularVelocity;
 		} else {
-			angularVelocity += ms.angularAcceleration * Time.fixedDeltaTime;
-			if (angularVelocity > ms.maxAngularVelocity) {
+			angularVelocity += ms.angularAcceleration * angleDir * Time.fixedDeltaTime;
+			if (angleDir == 1 && angularVelocity > ms.maxAngularVelocity) {
 				angularVelocity = ms.maxAngularVelocity;
-			}
+			} else if (angleDir == -1 && angularVelocity < ms.maxAngularVelocity * -1) {
+				angularVelocity = -1 * ms.maxAngularVelocity;
+            }
 		}
 
 		//Linear Calculations
@@ -111,7 +119,8 @@ public class UAgentMovement : MonoBehaviour {
         }
 
 		//Transformations
-		transform.rotation = FixedRotateTowards(direction, angularVelocity, 'y');
+		//transform.rotation = FixedRotateTowards(direction, angularVelocity, 'y');
+		transform.rotation *= Quaternion.Euler(0, angularVelocity * Time.fixedDeltaTime, 0);
 		transform.position += velocity * Time.fixedDeltaTime;
 		if(uAgentCore.hasMetabolism) {
 			uAgentCore.uAgentMetabolism.stamina -= ms.staminaPerSecond * Time.fixedDeltaTime;
@@ -136,9 +145,14 @@ public class UAgentMovement : MonoBehaviour {
             }
         }
 
-		if(path != null) {
+		if (path != null && path.Length > 0) {
+			if (pathIndex > path.Length - 1) {
+				path = null;
+				return;
+			}
+
 			Vector3 direction = (Vector3.Scale(path[pathIndex] - transform.position, Vector3.right + Vector3.forward)).normalized;
-			MoveDir(direction);
+			MoveDir(direction, i);
 
 			if(Vector3.SqrMagnitude(transform.position - path[pathIndex]) <= waypointRadius * waypointRadius) {
 				pathIndex++;
@@ -161,8 +175,8 @@ public class UAgentMovement : MonoBehaviour {
     }
 
 	public void Move(Vector3 target, int i=0){
-		PathRequestManager.RequestPath(transform.position, target, maxHeightDelta, OnPathFound);
-		Move(target, i);
+		PathRequestManager.RequestPath(transform.position, target, maxHeightDelta, maxNodes, OnPathFound);
+		Move(i);
 	}
 
 	public void Move(Vector3 target, string key) {
@@ -173,6 +187,38 @@ public class UAgentMovement : MonoBehaviour {
 			}
 		}
     }
+
+	public void Turn(float direction, int i=0){
+		MovementSettings ts = turnSettings[i];
+		if(uAgentCore.hasMetabolism) {
+			if(uAgentCore.uAgentMetabolism.stamina < ts.staminaPerSecond * Time.fixedDeltaTime) {
+				return;
+			}
+		}
+
+		//Angular Calculations
+		if(angularVelocity < ts.minAngularVelocity) {
+			angularVelocity = ts.minAngularVelocity;
+		} else {
+			angularVelocity += ts.angularAcceleration * Time.fixedDeltaTime;
+			if(angularVelocity > ts.maxAngularVelocity) {
+				angularVelocity = ts.maxAngularVelocity;
+			}
+		}
+		float radians = direction * 2 * Mathf.PI;
+		float sin = Mathf.Sin(radians);
+		float cos = Mathf.Cos(radians);
+		Vector3 v = transform.forward;
+		Vector3 target = transform.position;
+		target += new Vector3((cos * v.x) - (sin * v.z), 0.0f, (sin * v.x) + (cos * v.z));
+		Debug.Log(angularVelocity);
+
+		//Transformations
+		transform.rotation = FixedRotateTowards(target, angularVelocity, 'y');
+		if(uAgentCore.hasMetabolism) {
+			uAgentCore.uAgentMetabolism.stamina -= ts.staminaPerSecond * Time.fixedDeltaTime;
+		}
+	}
 
 // PATHFINDING
 //------------------------------------------------------------------------------

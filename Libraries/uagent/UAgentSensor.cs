@@ -2,7 +2,7 @@
 // Filename: UAgentSensor.cs
 // Author: Aaron Thompson
 // Date Created: 8/10/2020
-// Last Updated: 1/17/2021
+// Last Updated: 5/19/2025
 //
 // Description:
 //==============================================================================
@@ -21,6 +21,8 @@ public class UAgentSensor : MonoBehaviour {
 	//DATA
 	public static int sightVectorSize = 6;
 	public Tensor sightData;
+	public static int camVectorSize = 3;
+	public Tensor camData;
 
 	//SIGHT SETTING(s)
 	public bool hasSight = true;
@@ -39,6 +41,17 @@ public class UAgentSensor : MonoBehaviour {
 	[Range(0.001f, 2.0f)]
 	public float sightUpdateDeltaTime = 0.25f;
 
+	//CAMERA SETTINGS(s)
+	public bool hasCam = true;
+	public Camera cam;
+	public RenderTexture camRTex;
+	public int camWidth = 16;
+	public int camHeight = 16;
+	[Range(0.001f, 2.0f)]
+	public float camUpdateDeltaTime = 0.25f;
+	public Texture2D tCam2DTex;
+	public Color[] tCamColors;
+
 	//AUDITORY SETTING(s)
 	public bool hasHearing = true;
 
@@ -51,11 +64,25 @@ public class UAgentSensor : MonoBehaviour {
 // MONOBEHAVIOR METHODS
 //------------------------------------------------------------------------------
 	void Awake(){
+		//Sight
 		sightData = Tensor.Zeros(new int[] { rows, columns, sightVectorSize });
+
+		//Cam
+		cam = GetComponent<Camera>();
+		if(cam != null && hasCam) {
+			camRTex = new RenderTexture(camWidth, camHeight, 16, RenderTextureFormat.ARGB32);
+			camRTex.filterMode = FilterMode.Point;
+			tCam2DTex = new Texture2D(camWidth, camHeight, TextureFormat.ARGB32, false);
+			tCam2DTex.filterMode = FilterMode.Point;
+			cam.targetTexture = camRTex;
+			cam.enabled = false;
+		}
+		camData = Tensor.Zeros(new int[] { camWidth * camHeight, camVectorSize });
 	}
 
 	void Start(){
 		StartCoroutine(IESight());
+		StartCoroutine(IECam());
 	}
 	
 	void Update(){
@@ -77,7 +104,6 @@ public class UAgentSensor : MonoBehaviour {
 			sightData = Tensor.Zeros(new int[] { rows, columns, sightVectorSize });
 		}
 	}
-
 	IEnumerator IESight() {
 		while(true) {
 			Vector point = Vector.Zeros(2);
@@ -128,6 +154,33 @@ public class UAgentSensor : MonoBehaviour {
 
 			yield return new WaitForSeconds(sightUpdateDeltaTime);
 		}
+	}
+
+	IEnumerator IECam() {
+		yield return new WaitForEndOfFrame();
+		while (true) {
+			//Cam -> Texture -> Color array
+			RenderTexture temp = RenderTexture.active;
+
+			RenderTexture.active = camRTex;
+			cam.Render();
+			tCam2DTex.ReadPixels(new Rect(0, 0, camWidth, camHeight), 0, 0);
+			tCam2DTex.Apply();
+			tCamColors = tCam2DTex.GetPixels();
+			RenderTexture.active = temp;
+
+			//Color array -> Tensor data
+			for(int i = 0; i < tCamColors.Length; i++) {
+				camData.SetElement(tCamColors[i].r, new int[] { i, 0 });
+				camData.SetElement(tCamColors[i].g, new int[] { i, 1 });
+				camData.SetElement(tCamColors[i].b, new int[] { i, 2 });
+			}
+
+			//camData.Print();
+
+			yield return new WaitForSeconds(camUpdateDeltaTime);
+		}
+
 	}
 
 	private Vector GetSightPoint(GameObject gb) {

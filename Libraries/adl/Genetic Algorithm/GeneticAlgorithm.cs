@@ -2,7 +2,7 @@
 // Filename: GeneticAlgorithm.cs
 // Author: Aaron Thompson
 // Date Created: 6/19/2020
-// Last Updated: 8/4/2020
+// Last Updated: 8/11/2025
 //
 // Description:
 //==============================================================================
@@ -98,7 +98,7 @@ public class GeneticAlgorithm {
 		for(int i = 0; i < populationCount; i++) {
 			float score = UnityEngine.Random.value;
 			int index = 0;
-			for(index = populationCount - 1; index >= 0; index--) {
+			for(index = populationCount - 1; index > 0; index--) {
 				if(score <= fitnessProportions[index]) {
 					break;
 				}
@@ -123,8 +123,8 @@ public class GeneticAlgorithm {
 
 		EvalutateIndividual(populationCount - 1, true);
 
-		population.Sort((x, y) => x.fitnessScore.CompareTo(y.fitnessScore));
-		population.Reverse();
+		//population.Sort((x, y) => x.fitnessScore.CompareTo(y.fitnessScore));
+		//population.Reverse();
 	}
 
 	private void EvalutateIndividual(int index, bool update=false) {

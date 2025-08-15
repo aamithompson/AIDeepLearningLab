@@ -236,6 +236,66 @@ public class FFNeuralNetwork {
 	}
 
 	public List<Matrix>[] Backprop(Vector x, Vector y) {
+		//SINGLE NEURON BACKPROPAGATION MATH
+		//C = cost
+		//a = activation
+		//L = last layer (that is the predicted output)
+		//y = desired output
+		//C = (a_L - y)^2
+
+		//Then. . .
+		//w = weight
+		//b = bias
+		//And let z_L = (w_L * a_[L-1]) + b_L
+		//f() = neuron function
+		//a_L = f(z_L)
+
+		//Then. . .
+		//(dC/dw_L) = (dz_L/dw_L) * (da_L/dz_L) * (dC/da_L)
+		//That is. . .
+		//(dC/da_L) = (d/da_L)(C)
+		//          = (d/da_L)((a_L-y)^2)
+		//          = 2 * (a_L - y)
+		//(da_L/dz_L) = (d/dz_L)f((z_L))
+		//            = f'(z_L)
+		//(dz_L/dw_L) = (d/dw_L)(z_L)
+		//            = (d/dw_L)((w_L * a_[L-1]) + b_L)
+		//            = a_[L-1]
+		//Thus. . .
+		//(dC/dw_L) = (f'(z_L)) * (a_[L-1]) * (2 * (a_L - y))
+		//          = a_[L-1] * f'(z_L) * 2(a_L - y)
+
+		//For b_L
+		//(dC/db_L) = (dz_L/db_L) * (da_L/dz_L) * (dC/da_L)
+		//That is. . .
+		//(dz_L/db_L) = (d/db_L)((w_L * a_[L-1]) + b_L)
+		//            = 1
+		//Thus. . .
+		//(dC/db_L) = (f'(z_L)) * (1) * (2 * (a_L - y))
+		//          = f'(z_L) * 2(a_L - y)
+
+		//MULTI NEURON BACKPROPAGATION MATH
+		//C = SUM[n_L - 1][j=0]((a_L_j - y_j)^2)
+		//w_L_jk = weight to layer L with the edge from neuron k to neuron j
+		//z_L_j = . . . + w_L_jk * a_[L-1]_k + . . . = summation of previous neuron and weights connected to neuron j
+		//a_L_j = f(z_L_j)
+
+		//Then
+		//(dC/dw_L_jk) = (dz_L_j/dz_w_jk) * (da_L_j/dz_L_j) * (dC/da_L_j)
+		//That is...
+		//(dC_L/da_L_j) =  (d/da_L_j)(SUM[n_L - 1][j=0]((a_L_j - y_j)^2))
+		//              =  SUM[n_L - 1][j=0](2 * (a_L_j - y_j))
+		//(da_L_j/dz_L_j) = (d/dz_L_j)f(z_L_j)
+		//                = f'(z_L_j)
+		//(dz_L_j/dz_w_jk) = (d/dz_w_jk)(. . . + w_L_jk * a_[L-1]_k + . . .)
+		//                = (. . .+ a_[L-1]_jk + . . .)
+		//Thus. . .
+		//(dC/dw_L) = (f'(z_L_j)) * (. . . + a_[L-1]_jk + . . .) * (SUM[n_L - 1][j=0](2 * (a_L_j - y_j)))
+		//For b_L_j
+		//(dc_db_L) = (f'(z_L)) * (1) * (SUM[n_L - 1][j=0](2 * (a_L_j - y_j)))
+		//          = (f'(z_L)) * 2(SUM[n_L - 1][j=0]((a_L_j - y_j)))
+
+
 		List<Matrix> gradWeights = new List<Matrix>();
 		List<Matrix> gradBiases = new List<Matrix>();
 
@@ -295,7 +355,7 @@ public class FFNeuralNetwork {
 				TrainMiniBatch(xBatch, yBatch, learningRate, parallel);
             }
 
-			Debug.Log("[Neural Network] Epoch [" + (k+1).ToString() + "] / [" + epochs.ToString() + "] complete. (Batch Size: " + miniBatchSize.ToString() + ", Learning Rate: " + learningRate.ToString() + ")");
+			Debug.Log("[Neural Network] Epoch [" + (k+1).ToString() + "] / [" + epochs.ToString() + "] complete. (Training Data Size: " + (batches.Count * miniBatchSize).ToString() + ", Batch Size: " + miniBatchSize.ToString() + ", Learning Rate: " + learningRate.ToString() + ")");
         }
 
     }

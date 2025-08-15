@@ -20,6 +20,7 @@ public class UAgentDiet : MonoBehaviour {
 	//NON-AGENT VARIABLE(s)
 	public List<string> diet;
 	public HashSet<string> dietSet;
+	public float consumeRadius;
 
 // MONOBEHAVIOR METHODS
 //------------------------------------------------------------------------------
@@ -39,6 +40,7 @@ public class UAgentDiet : MonoBehaviour {
 
             if(uAgentCore.uAgentManager.consumables.ContainsKey(diet[i])) {
 				List<GameObject> cList = uAgentCore.uAgentManager.consumables[diet[i]];
+				Debug.Log(cList.Count);
 				if (minDistance < 0 && cList.Count > 0) {
 					consumable = cList[0];
 					minDistance = Vector3.SqrMagnitude(this.transform.position - cList[0].transform.position);
@@ -58,11 +60,13 @@ public class UAgentDiet : MonoBehaviour {
     }
 
 	public void Consume(Consumable consumable) {
-		Nutrition nutrition = consumable.Consume();
+		if((transform.position - consumable.gameObject.transform.position).sqrMagnitude <= consumeRadius * consumeRadius) {
+			Nutrition nutrition = consumable.Consume();
 
-		if(uAgentCore.hasMetabolism) {
-			uAgentCore.uAgentMetabolism.ApplyNutrution(nutrition);
-        }
+			if (uAgentCore.hasMetabolism) {
+				uAgentCore.uAgentMetabolism.ApplyNutrution(nutrition);
+			}
+		}
     }
 	
 	private void UpdateSets() {

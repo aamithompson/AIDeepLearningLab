@@ -9,6 +9,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using lmath;
 //------------------------------------------------------------------------------
 public class UAgentCore : MonoBehaviour {
 // VARIABLES
@@ -33,8 +34,9 @@ public class UAgentCore : MonoBehaviour {
 
 	// COMMAND VARIABLE(s)
 	private Queue<Command> commands;
-	private Command currentCmd;
-	private bool initiatingCmd;
+	public Command currentCmd;
+	public bool initiatingCmd;
+	public bool runningCmd;
 
 	// DEBUG SETTING(s)
 	public bool debugEnabled = false;
@@ -89,18 +91,20 @@ public class UAgentCore : MonoBehaviour {
 		if (hasCognition) { uAgentCognition.uAgentCore = this; }
 	}
 
-	public void Override(string category, int index=0) {
-		currentCmd = new Command(category, index);
+	public void Override(Vector v, string category, string function, int index=0) {
+		currentCmd = new Command(category, function, index, v);
 		initiatingCmd = true;
+		runningCmd = true;
 	}
 
 	public void Next() {
 		currentCmd = Dequeue();
 		initiatingCmd = true;
-    }
+		runningCmd = true;
+	}
 	
-	public void Enqueue(string category, int index=0) {
-		Command command = new Command(category, index);
+	public void Enqueue(Vector v, string category, string function, int index=0) {
+		Command command = new Command(category, function, index, v);
 		commands.Enqueue(command);
     }
 
@@ -116,11 +120,15 @@ public class UAgentCore : MonoBehaviour {
 //------------------------------------------------------------------------------
 	public struct Command{
 		public string category;
+		public string function;
 		public int index;
+		public Vector v;
 
-        public Command(string category, int index) {
+        public Command(string category, string function, int index, Vector v) {
 			this.category = category;
+			this.function = function;
 			this.index = index;
+			this.v = new Vector(v);
         }
 	}
 }

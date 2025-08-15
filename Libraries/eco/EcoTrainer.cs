@@ -25,7 +25,7 @@ public class EcoTrainer : MonoBehaviour {
 
     //Experiment Controls
     public bool running;
-    public float startTime;
+    public float sTime;
 
     //Whitelisting
     public string[] whitelist;
@@ -68,11 +68,12 @@ public class EcoTrainer : MonoBehaviour {
         speciesManager = GetComponent<SpeciesManager>();
 
         InitalizeSettings();
+        Populate();
     }
 
     void Update() {
         if(running) {
-
+            sTime += Time.deltaTime;
         }
     }
 
@@ -264,6 +265,7 @@ public class EcoTrainer : MonoBehaviour {
         ClearAgents();
         InstantiateAgents();
         UpdateAgents();
+        sTime = 0;
     }
 
     public void Initialize() {
@@ -279,10 +281,15 @@ public class EcoTrainer : MonoBehaviour {
 
     public void Resume() {
         running = true;
+        
+        if(sTime == 0) {
+            Step();
+        }
     }
 
     public void Stop() {
         running = false;
+        sTime = 0;
 
         ClearAgents();
     }

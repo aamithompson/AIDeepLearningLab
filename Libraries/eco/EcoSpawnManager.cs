@@ -47,7 +47,7 @@ public class EcoSpawnManager : MonoBehaviour {
             environObjects.Add(list);
         }
 
-        SpawnPopulations();
+        //SpawnPopulations();
         UpdateEnvironment(0);
     }
 
@@ -138,6 +138,7 @@ public class EcoSpawnManager : MonoBehaviour {
     public GameObject InstantiateEnvironObject(int index, Vector3 position) {
         GameObject gameObject = Instantiate(environPresets[index]);
         gameObject.transform.position = position;
+        gameObject.name = gameObject.name.Replace("(Clone)", "").Trim();
         environObjects[index].Add(gameObject);
         maxEnvironCount[index]++;
         return gameObject;

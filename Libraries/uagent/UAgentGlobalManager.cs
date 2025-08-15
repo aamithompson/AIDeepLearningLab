@@ -24,6 +24,7 @@ public class UAgentGlobalManager : MonoBehaviour {
 	void Awake() {
 		agents = new List<GameObject>();
 		consumables = new Dictionary<string, List<GameObject>>();
+		uagent.Lexicon.Initalize();
 		StartCoroutine(IEUpdateList());
 	}
 
@@ -52,7 +53,7 @@ public class UAgentGlobalManager : MonoBehaviour {
 				consumables.Add(cTemp[i].id, new List<GameObject>());
 			}
 
-			consumables[cTemp[i].id].Add(gameObject);
+			consumables[cTemp[i].id].Add(cTemp[i].gameObject);
 		}
 	}
 

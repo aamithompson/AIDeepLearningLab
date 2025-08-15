@@ -50,10 +50,9 @@ public class Consumable : MonoBehaviour {
         portions = System.Math.Min(portions, this.portions);
         Nutrition nutrition = GetNutrition(portions);
 
-        if(maxPortions <= 0) {
-            if(portions > 1) {
-                this.portions -= portions;
-            } else if (portions == 0) {
+        if(maxPortions > 0) {
+            this.portions -= portions;
+            if(portions <= 0) {
                 Destroy(this.gameObject);
             }
         }
