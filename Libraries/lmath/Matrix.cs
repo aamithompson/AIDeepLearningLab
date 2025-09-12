@@ -2,16 +2,19 @@
 // Filename: Matrix.cs
 // Author: Aaron Thompson
 // Date Created: 5/31/2020
-// Last Updated: 8/14/2025
+// Last Updated: 9/11/2025
 //
 // Description:
+//	The matrix, that is 2D derivation of the LArray class, is a math object
+//	which contains m rows and n columns. Supports basic arithmetic as well as
+//	common functions for matrix math such as Matrix Multiplication, Transforms,
+//	Determinants, Traces, Norms, and Hadamard Product.
 //  Resource for optimizing matrix multiplication:
 //  https://www.youtube.com/watch?v=o7h_sYMk_oc
 //==============================================================================
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace lmath {
 
@@ -123,7 +126,7 @@ public class Matrix : LArray {
 
 	public static Matrix Diag(float e, int m, int n) {
 		Matrix matrix = Zeros(m, n);
-		int diagonalLength = Mathf.Min(m, n);
+		int diagonalLength = System.Math.Min(m, n);
 
 		for(int i = 0; i < diagonalLength; i++) {
 				matrix.SetElement(e, i, i);
@@ -141,7 +144,7 @@ public class Matrix : LArray {
 		}
 		Matrix matrix = Zeros(m, n);
 
-		int max = Mathf.Min(new int[] { m, n, data.Length});
+		int max = System.Math.Min(System.Math.Min(m, n), data.Length);
 		for(int i = 0; i < max; i++) {
 			matrix[i, i] = data[i];
 		}
@@ -261,12 +264,12 @@ public class Matrix : LArray {
 			int kblocks = (p/BLOCK_MATRIX_SIZE) + 1;
 			Parallel.For(0, iblocks, iblock => {
 				int ib = iblock * BLOCK_MATRIX_SIZE;
-				int iMax = Mathf.Min(ib + BLOCK_MATRIX_SIZE, m);
+				int iMax = System.Math.Min(ib + BLOCK_MATRIX_SIZE, m);
 				Parallel.For(0, kblocks, kblock => {
 					int kb = iblock * BLOCK_MATRIX_SIZE;
-					int kMax = Mathf.Min(kb + BLOCK_MATRIX_SIZE, n);
+					int kMax = System.Math.Min(kb + BLOCK_MATRIX_SIZE, n);
 					for(int jb = 0; jb < p; jb += BLOCK_MATRIX_SIZE) {
-						int jMax = Mathf.Min(jb + BLOCK_MATRIX_SIZE, p);
+						int jMax = System.Math.Min(jb + BLOCK_MATRIX_SIZE, p);
 						for(int i = ib; i < iMax; i++) {
 							for(int k = kb; k < kMax; k++) {
 								for(int j = jb; j < jMax; j++) {
@@ -279,11 +282,11 @@ public class Matrix : LArray {
 			});
 		} else {
 			for(int ib = 0; ib < m; ib += BLOCK_MATRIX_SIZE) {
-				int iMax = Mathf.Min(ib + BLOCK_MATRIX_SIZE, m);
+				int iMax = System.Math.Min(ib + BLOCK_MATRIX_SIZE, m);
 				for(int kb = 0; kb < n; kb += BLOCK_MATRIX_SIZE) {
-					int kMax = Mathf.Min(kb + BLOCK_MATRIX_SIZE, n);
+					int kMax = System.Math.Min(kb + BLOCK_MATRIX_SIZE, n);
 					for(int jb = 0; jb < p; jb += BLOCK_MATRIX_SIZE) {
-						int jMax = Mathf.Min(jb + BLOCK_MATRIX_SIZE, p);
+						int jMax = System.Math.Min(jb + BLOCK_MATRIX_SIZE, p);
 						for(int i = ib; i < iMax; i++) {
 							for(int k = kb; k < kMax; k++) {
 								for(int j = jb; j < jMax; j++) {
@@ -334,7 +337,7 @@ public class Matrix : LArray {
 		int m = A.GetShape()[0];
 		int n = A.GetShape()[1];
 		int p = B.GetShape()[1];
-		int s = Mathf.Max(m, n, p);
+		int s = System.Math.Max(System.Math.Max(m, n), p);
 		s = (s % 2 == 1) ? s + 1 : s;
 		int sd2 = s/2;
 		Matrix AP = Matrix.Zeros(s, s);
@@ -508,25 +511,25 @@ public class Matrix : LArray {
 
 //CONDITIONS
 //------------------------------------------------------------------------------
-public bool IsSymmetric() {
-	if(shape[0] != shape[1]) {
-		return false;
-	}
+	public bool IsSymmetric() {
+		if(shape[0] != shape[1]) {
+			return false;
+		}
 
-	for(int i = 0; i < shape[0] - 1; i++) {
-		for(int j = i + 1; j < shape[0]; j++) {
-			if(i == j) {
-				continue;
-            }
+		for(int i = 0; i < shape[0] - 1; i++) {
+			for(int j = i + 1; j < shape[0]; j++) {
+				if(i == j) {
+					continue;
+				}
 
-			if(GetElement(i, j) != (GetElement(j, i))) {
-				return false;
+				if(GetElement(i, j) != (GetElement(j, i))) {
+					return false;
+				}
 			}
 		}
-	}
 
-	return true;
-}
+		return true;
+	}
 
 }
 } // END namespace lmath

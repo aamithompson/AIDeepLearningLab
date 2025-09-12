@@ -2,7 +2,7 @@
 // Filename: ParallelRandom.cs
 // Author: Aaron Thompson
 // Date Created: 12/30/2021
-// Last Updated: 1/10/2022
+// Last Updated: 9/7/2025
 //
 // Description: https://devblogs.microsoft.com/pfxteam/getting-random-numbers-in-a-thread-safe-way/
 //==============================================================================
@@ -25,7 +25,7 @@ public static class ParallelRandom {
     }
 
     public static int Next(int min, int max) {
-        return Next() * (max - min) + min;
+        return (int)(((float)Next() /int.MaxValue) * (max - min)) + min;
     }
     
     //Returns a number from 0.0 to 1.0

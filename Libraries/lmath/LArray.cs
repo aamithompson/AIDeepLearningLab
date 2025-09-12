@@ -2,13 +2,12 @@
 // Filename: LArray.cs
 // Author: Aaron Thompson
 // Date Created: 6/7/2020
-// Last Updated: 8/27/2021
+// Last Updated: 9/11/2025
 //
 // Description:
 //==============================================================================
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using statistics;
 
 namespace lmath {
@@ -17,17 +16,21 @@ public abstract class LArray {
 //------------------------------------------------------------------------------
 	protected float[] data;
 	protected int[] shape;
-	public int rank { get { return shape.Length; } }
+	public int rank { get { return shape.GetLength(0); } }
 	public static float epsilon = 0.00001f;
 
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public LArray() {
 		data = new float[0];
-		shape = new int[0];
+		shape = new int[1] { 0 };
 	}
 
 	public LArray(System.Array data) {
+		if(data == null){
+			throw new System.ArgumentNullException(nameof(data));
+		}
+
 		SetData(data);
 	}
 
@@ -63,6 +66,10 @@ public abstract class LArray {
 			index = GetLength() + index;
         }
 
+		if(index >= data.Length) {
+			throw new System.IndexOutOfRangeException($"Index {index} out of bounds for length {GetLength()}");
+        }
+
 		return data[index];
     }
 
@@ -74,6 +81,10 @@ public abstract class LArray {
 		if(index < 0) {
 			index = GetLength() + index;
         }
+
+		if (index >= data.Length) {
+				throw new System.IndexOutOfRangeException($"Index {index} out of bounds for length {this.data.Length}");
+		}
 
 		data[index] = e;
     }
@@ -93,14 +104,12 @@ public abstract class LArray {
 	}
 
 	//DATA
-	//TODO : ERROR for when data.length != this.data.length
 	public void SetData(float[] data) {
-		for(int i = 0; i < data.Length; i++) {
+		for (int i = 0; i < data.Length; i++) {
 				this.data[i] = data[i];
 		}
 	}
 
-	//TODO : ERROR for when System.Array data ranks != shape.length
 	public void SetData(System.Array data) {
 		float[] data1D = NDArrayTo1DArray(data);
 		int totalLength = 1;
@@ -128,10 +137,39 @@ public abstract class LArray {
     }
 
 	//SLICE
-	//TODO : ERROR for when range is outside shape lengths
-	//TODO : ERROR for when data length != total length
-	//This function uses an INCLUSIVE [a, b] range
+	//This function uses an INCLUSIVE [a, b] range for each dimension.
 	public void SetSlice(float[] data, int[,] range) {
+		//ERROR HANDLING BEGIN
+		if(range.GetLength(0) != shape.Length) {
+				throw new System.ArgumentException($"Rank of range {range.GetLength(0)} does not match the expected rank of shape {shape.Length}.");
+		}
+
+		{
+			int sum = 1;
+			for (int i = 0; i < range.GetLength(0); i++) {
+				if(range[i,0] < 0 || range[i,1] < 0) {
+					throw new System.ArgumentException($"range {i} contains negative numbers.");
+				}
+
+				int length = (range[i, 1] - range[i, 0]) + 1;
+				if(length <= 0) {
+					throw new System.ArgumentException($"Dimension length {length} in range {i} is non-positive (<=0).");
+                }
+
+				if (length > shape[i]) {
+					throw new System.ArgumentException($"Dimension length {length} in range {i} is greater than max dimension length {shape[i]} in shape {i}.");
+                }
+
+				sum *= length;
+			}
+
+			if(sum > data.Length) {
+					throw new System.ArgumentException($"Total range length {sum} is greater than data length {data.Length}.");
+            }
+		}
+		//ERROR HANDLING END
+
+
 		int rank = range.GetLength(0);
 		int[] coordinate = new int[rank];
 		int totalLength = 1;
@@ -266,6 +304,7 @@ public abstract class LArray {
 
 		this.data = new float[totalLength];
 		SetData(data);
+		this.shape = new int[rank];
 		System.Array.Copy(shape, this.shape, rank);
 	}
 	
@@ -380,6 +419,33 @@ public abstract class LArray {
 		}
     }
 
+		//BOOLEAN
+	public bool ContentEquals(LArray larray) {
+		if(larray == null) {
+			throw new System.ArgumentNullException(nameof(larray));
+        }
+
+		int rank = shape.GetLength(0);
+		if(larray.shape.GetLength(0) != rank) {
+			return false;
+		}
+
+		for(int i = 0; i < rank; i++) {
+			if(larray.shape[i] != this.shape[i]) {
+				return false;
+            }
+		}
+
+		float[] data = larray.AccessData();
+		for(int i = 0; i < data.Length; i++) {
+			if (data[i] != this.data[i]) {
+				return false;
+			}
+        }
+
+		return true;
+	}
+
 	//RANDOMIZE
 	//TODO : ERROR if shape != min.shape != max.shape
 	public void Randomize(LArray min, LArray max) {
@@ -388,13 +454,13 @@ public abstract class LArray {
 		for(int i = 0; i < data.Length; i++) {
 			float minValue = minData[i];
 			float maxValue = maxData[i];
-			data[i] = UnityEngine.Random.Range(minValue, maxValue);
+			data[i] = Statistics.NextFloat(minValue, maxValue);
 		}
 	}
 
 	public void Randomize(float min, float max) {
 		for(int i = 0; i < data.Length; i++) { 
-			data[i] = UnityEngine.Random.Range(min, max);
+			data[i] = Statistics.NextFloat(min, max);
 		}
 	}
 
@@ -453,7 +519,7 @@ public abstract class LArray {
 	}
 	
 	public void Print() {
-		MonoBehaviour.print(ToString());
+		System.Console.WriteLine(ToString());
 	}
 
 	public void Operation(System.Func<float, float> f) {

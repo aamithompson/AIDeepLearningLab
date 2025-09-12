@@ -2,22 +2,24 @@
 // Filename: Statistics.cs
 // Author: Aaron Thompson
 // Date Created: 7/20/2021
-// Last Updated: 1/10/2022
+// Last Updated: 9/11/2025
 //
 // Description:
 //==============================================================================
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using lmath;
 //------------------------------------------------------------------------------
 namespace statistics {
+
 public enum Distribution {
 	Uniform,
 	Gaussian
 };
 
 public static class Statistics {
+    private static System.Random _global = new System.Random();
+
 // CORRECT/ERROR
 //------------------------------------------------------------------------------
     //True Positive
@@ -92,7 +94,7 @@ public static class Statistics {
 
     public static float Accuracy(List<Vector> yData, List<Vector> yTarget) {
             int correct = 0;
-            int n = Mathf.Min(yData.Count, yTarget.Count);
+            int n = System.Math.Min(yData.Count, yTarget.Count);
             int l = yTarget[0].length;
             for (int i = 0; i < n; i++) {
                 int best_yPredicted = 0;
@@ -119,6 +121,14 @@ public static class Statistics {
 
 // DISTRIBUTIONS
 //------------------------------------------------------------------------------
+    public static float NextFloat() {
+        return (float)_global.NextDouble();
+    }
+
+    public static float NextFloat(float min, float max) {
+        return min + ((float)_global.NextDouble() * (max - min));
+    }
+
     //GAUSSIAN/NORMAL
     //Marsaglia Polar Method
     private static float spare;
@@ -135,14 +145,14 @@ public static class Statistics {
                 u = ParallelRandom.NextFloat(-1.0f, 1.0f);
                 v = ParallelRandom.NextFloat(-1.0f, 1.0f);
             } else {
-                u = UnityEngine.Random.Range(-1.0f, 1.0f);
-                v = UnityEngine.Random.Range(-1.0f, 1.0f);
+                u = NextFloat(-1.0f, 1.0f);
+                v = NextFloat(-1.0f, 1.0f);
             }
 
             s = u * u + v * v;
         } while (s >= 1 || s <= 0.0000000001f);
 
-        s = Mathf.Sqrt(-2 * Mathf.Log(s) / s);
+        s = System.MathF.Sqrt(-2 * System.MathF.Log(s) / s);
         spare = v * s;
         hasSpare = true;
 

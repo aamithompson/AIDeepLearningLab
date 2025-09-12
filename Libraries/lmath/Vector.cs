@@ -2,13 +2,12 @@
 // Filename: Vector.cs
 // Author: Aaron Thompson
 // Date Created: 6/11/2020
-// Last Updated: 8/27/2021
+// Last Updated: 9/11/2025
 //
 // Description:
 //==============================================================================
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace lmath {
 public class Vector : LArray {
@@ -217,7 +216,7 @@ public class Vector : LArray {
 
 	//ORTHOGONAL
 	public bool IsOrthogonal(Vector vector) {
-		double dot = System.Convert.ToDouble(Dot(vector));
+		float dot = Dot(vector);
 
 		return dot < epsilon;
 	}

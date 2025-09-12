@@ -2,13 +2,12 @@
 // Filename: Tensor.cs
 // Author: Aaron Thompson
 // Date Created: 5/20/2020
-// Last Updated: 6/3/2020
+// Last Updated: 9/11/2025
 //
 // Description:
 //==============================================================================
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 //------------------------------------------------------------------------------
 namespace lmath {
 public class Tensor : LArray {
@@ -17,7 +16,7 @@ public class Tensor : LArray {
 //------------------------------------------------------------------------------
 	public Tensor() {
 		data = new float[0];
-		shape = new int[0];
+		shape = new int[1] { 0 };
 	}
 
 	public Tensor(System.Array data) {
