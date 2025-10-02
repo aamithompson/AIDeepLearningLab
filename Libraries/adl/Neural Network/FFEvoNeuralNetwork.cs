@@ -96,7 +96,7 @@ public class FFEvoNeuralNetwork {
 					yBatch.Add(batches[i][j].y);
                 }
 
-				GA.Continue(1, parallel);
+				GA.Continue(1);
 
                 Matrix bestd = GA.GetBestFit()[0];
                 int indexd = 0;

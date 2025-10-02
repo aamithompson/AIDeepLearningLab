@@ -2,7 +2,7 @@
 // Filename: GeneticAlgorithm.cs
 // Author: Aaron Thompson
 // Date Created: 6/19/2020
-// Last Updated: 8/11/2025
+// Last Updated: 10/2/2025
 //
 // Description:
 //==============================================================================
@@ -17,12 +17,14 @@ public class GeneticAlgorithm {
 // VARIABLES
 //------------------------------------------------------------------------------
 	private List<Individual> population;
+	private List<Individual> newPopulation;
 
 	//General Settings
 	public Distribution distributionType;
 
 	//Population Settings
 	public int populationCount;
+	public int eliteCount;
 	public Matrix minValueMatrix; //[UNIFORM]
 	public Matrix maxValueMatrix; //[UNIFORM]
 	public Matrix meanValueMatrix; //[GAUSSIAN]
@@ -60,20 +62,21 @@ public class GeneticAlgorithm {
 // ALGORITHM
 //------------------------------------------------------------------------------
 	//GENERATION CONTROL
-	public void Run(int k = 1, bool parallel=true) {
+	public void Run(int k = 1) {
 		Populate();
-		Continue(k, parallel);
+		Continue(k);
 	}
 
-	public void Continue(int k = 1, bool parallel=true) {
+	public void Continue(int k = 1) {
 		while(k > 0) {
-			Fit(parallel);
-			Crossover(parallel);
-			Mutate(parallel);
+			Fit();
+			Crossover();
+			Mutate();
+			ReplacePopulation();
 			k--;
 		}
 
-		EvaluatePopulation(parallel);
+		Fit();
 	}
 	
 	//INITIALIZE POPULATION
@@ -91,80 +94,78 @@ public class GeneticAlgorithm {
 	
 
 	//FITNESS FUNCTION
-	public void Fit(bool parallel=true) {
-		List<Individual> fitPopulation = new List<Individual>();
-		EvaluatePopulation(parallel);
+	public void Fit() {
+		EvaluatePopulation();
+		population.Sort((x, y) => x.fitnessScore.CompareTo(y.fitnessScore));
+		population.Reverse();
+
+		float min = population[populationCount - 1].fitnessScore;
+		float shift = (min < 0) ? -min + 0.01f : 0.0f; //0.01f = epsilon
+
+		//Probability Calculation
+		float sum = 0.0f;
+		for (int i = 0; i < populationCount; i++) {
+			sum += population[i].fitnessScore + shift;
+			fitnessProportions[i] = sum;
+		}
+		fitnessProportions *= (1.0f / sum);
+	}
+
+	public void EvaluatePopulation(bool currentPopulation=true) {
+		for(int i = 0; i < populationCount; i++) {
+			EvalutateIndividual(i, currentPopulation);
+		}
+	}
+
+	private void EvalutateIndividual(int index, bool currentPopulation = true) {
+		if (currentPopulation) {
+			float score = fitnessFunction(population[index].data);
+			Individual individual = new Individual(population[index].data, score);
+			population[index] = individual;
+		} else {
+				float score = fitnessFunction(newPopulation[index].data);
+				Individual individual = new Individual(newPopulation[index].data, score);
+				newPopulation[index] = individual;
+		}
+	}
+
+	//SELECTION
+	private Individual SelectIndividual() {
+		float selection = Statistics.NextFloat();
 
 		for(int i = 0; i < populationCount; i++) {
-			float score = UnityEngine.Random.value;
-			int index = 0;
-			for(index = populationCount - 1; index > 0; index--) {
-				if(score <= fitnessProportions[index]) {
-					break;
-				}
-			}
-
-			fitPopulation.Add(population[index]);
-		}
-
-		population = fitPopulation;
-	}
-
-	public void EvaluatePopulation(bool parallel=true) {
-		if(parallel) {
-			Parallel.For(0, populationCount - 1, i => {
-				EvalutateIndividual(i);
-			});
-        } else {
-			for(int i = 0; i < populationCount - 1; i++) {
-				EvalutateIndividual(i);
+			if(selection <= fitnessProportions[i]) {
+				return population[i];
             }
         }
 
-		EvalutateIndividual(populationCount - 1, true);
-
-		//population.Sort((x, y) => x.fitnessScore.CompareTo(y.fitnessScore));
-		//population.Reverse();
-	}
-
-	private void EvalutateIndividual(int index, bool update=false) {
-		float score = fitnessFunction(population[index].data);
-		Individual individual = new Individual(population[index].data, score);
-		population[index] = individual;
-
-		if (update) {
-			population.Sort((x, y) => x.fitnessScore.CompareTo(y.fitnessScore));
-			population.Reverse();
-
-			float sum = 0.0f;
-			for (int i = 0; i < populationCount; i++) {
-				fitnessProportions[i] = population[i].fitnessScore;
-				sum += population[i].fitnessScore;
-			}
-			fitnessProportions *= (1.0f / sum);
-
-			for (int i = populationCount - 2; i >= 0; i--) {
-				fitnessProportions[i] += fitnessProportions[i+1];
-            }
-        }
-	}
+		return population[populationCount - 1];
+    }
 
 	//CROSSOVER
-	public void Crossover(bool parallel=true) {
-		if(parallel) {
-			Parallel.For(0, (populationCount - 1)/2, i => {
-				int index = i * 2;
-				Individual[] offspring = Offspring(population[index], population[index + 1]);
-				population[index] = offspring[0];
-				population[index + 1] = offspring[1];
-			});
-        } else {
-			for(int i = 0; i < populationCount - 1; i += 2) {
-				Individual[] offspring = Offspring(population[i], population[i + 1]);
-				population[i] = offspring[0];
-				population[i + 1] = offspring[1];
+	public void Crossover() {
+		newPopulation = new List<Individual>();
+		for(int i = 0; i < populationCount - 1; i += 2) {
+				Individual parentA = SelectIndividual();
+				Individual parentB = SelectIndividual();
+				while(parentA == parentB) {
+					parentB = SelectIndividual();
+                }
+
+				Individual[] offspring = Offspring(parentA, parentB);
+				newPopulation.Add(offspring[0]);
+				newPopulation.Add(offspring[1]);
+		}
+
+		if(populationCount%2 == 1) {
+			Individual parentA = SelectIndividual();
+			Individual parentB = SelectIndividual();
+			while (parentA == parentB) {
+				parentB = SelectIndividual();
 			}
-        }
+
+			newPopulation.Add(Offspring(parentA, parentB)[0]);
+		}
 	}
 	
 	private Individual[] Offspring(Individual parentA, Individual parentB, bool parallel=true){
@@ -183,24 +184,27 @@ public class GeneticAlgorithm {
 				}
             }
         } else {
-			bool flip = true;
-			float distance = n/(float)(crossPoints + 1);
-			float a = distance - 1;
-			int i = 0;
-			while(crossPoints > 0) {
-				int point = UnityEngine.Mathf.RoundToInt(a);
-				while(i <= point && i < n) {
-					if (flip) {
-						childA.data[(i + crossOffset) % n] = parentA.data[i];
-						childB.data[(i + crossOffset) % n] = parentB.data[i];
-                    }
+			crossPoints = System.Math.Min(crossPoints, n - 1);
+			int[] points = new int[crossPoints];
+			int distance = n/crossPoints;
+			int a = 0;
+			for(int i = 0; i < crossPoints; i++) {
+				a += distance;
+				points[i] = a;
+			}
 
-					i++;
+			bool flip = true;
+			int pointIndex = 0;
+			for(int i = 0; i < n; i++) {
+				if(pointIndex < crossPoints && i >= points[pointIndex]) {
+					flip = !flip;
+					pointIndex++;
                 }
 
-				flip = !flip;
-				a += distance;
-				crossPoints--;
+				if(flip) {
+					childA.data[(i + crossOffset) % n] = parentA.data[i];
+					childB.data[(i + crossOffset) % n] = parentB.data[i];
+				}
             }
         }
 
@@ -211,21 +215,19 @@ public class GeneticAlgorithm {
 	}
 
 	//MUTATION
-	public void Mutate(bool parallel=true) {
-		if (parallel) {
-			Parallel.For(0, populationCount, i => {
-				MutateIndividual(i, true);
-			});
-        } else {
-			for(int i = 0; i < populationCount; i++) {
-				MutateIndividual(i, false);
-			}
+	public void Mutate() {
+		if(newPopulation == null || newPopulation.Count == 0){
+			newPopulation = new List<Individual>(population);
+		}
+
+		for(int i = 0; i < populationCount; i++) {
+			MutateIndividual(i);
         }
 	}
 	
-	private void MutateIndividual(int index, bool parallel=true) {
-		for(int i = 0; i < population[index].data.GetLength(); i++) {
-			float rvalue = (parallel) ? ParallelRandom.NextFloat() : UnityEngine.Random.value;
+	private void MutateIndividual(int index) {
+		for(int i = 0; i < newPopulation[index].data.GetLength(); i++) {
+			float rvalue = Statistics.NextFloat();
 
 			if (rvalue < mutationRate) {
 				if(distributionType == Distribution.Uniform) {
@@ -236,26 +238,40 @@ public class GeneticAlgorithm {
 						minValue = minValueMatrix[i];
 						maxValue = maxValueMatrix[i];
 					} else {
-						minValue = population[index].data[i] + minMutationMatrix[i];
+						minValue = newPopulation[index].data[i] + minMutationMatrix[i];
 						if (minValue < minValueMatrix[i])
 						{
 							minValue = minValueMatrix[i];
 						}
 
-						maxValue = population[index].data[i] + maxMutationMatrix[i];
+						maxValue = newPopulation[index].data[i] + maxMutationMatrix[i];
 						if (maxValue > maxValueMatrix[i])
 						{
 							maxValue = maxValueMatrix[i];
 						}
 					}
 
-					population[index].data[i] = (parallel) ? ParallelRandom.NextFloat(minValue, maxValue) : UnityEngine.Random.Range(minValue, maxValue);
+					newPopulation[index].data[i] = Statistics.NextFloat(minValue, maxValue);
 				}
 			} else if (distributionType == Distribution.Gaussian) {
-				population[index].data[i] += Statistics.randomN(meanMutationMatrix[i], stdDevMutationMatrix[i], parallel);
+				newPopulation[index].data[i] += Statistics.randomN(meanMutationMatrix[i], stdDevMutationMatrix[i]);
 			}
 		}
 	}
+
+	//REPLACEMENT
+	public void ReplacePopulation() {
+		EliteSelection();
+		population = new List<Individual>(newPopulation);
+    }
+
+	public void EliteSelection() {
+		EvaluatePopulation(false);
+		newPopulation.Sort((x, y) => x.fitnessScore.CompareTo(y.fitnessScore));
+		for(int i = 0; i < eliteCount; i++) {
+			newPopulation[i] = population[i];
+		}
+    }
 
 // OPERATIONS
 //------------------------------------------------------------------------------
