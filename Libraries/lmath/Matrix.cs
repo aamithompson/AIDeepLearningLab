@@ -2,7 +2,7 @@
 // Filename: Matrix.cs
 // Author: Aaron Thompson
 // Date Created: 5/31/2020
-// Last Updated: 9/11/2025
+// Last Updated: 9/17/2025
 //
 // Description:
 //	The matrix, that is 2D derivation of the LArray class, is a math object
@@ -53,11 +53,31 @@ public class Matrix : LArray {
 // DATA MANAGEMENT
 //------------------------------------------------------------------------------
 	public float GetElement(int i, int j) {
+		if(i < 0) {
+			i = shape[0] + i;
+        }
+
+		if(j < 0) {
+			j = shape[1] + j;
+        }
+
+		Validate2DIndex(i, j);
+
 		int index = (i * shape[1]) + j;
-			return data[index];
+		return data[index];
 	}
 
 	public void SetElement(float e, int i, int j) {
+		if(i < 0) {
+			i = shape[0] + i;
+        }
+
+		if(j < 0) {
+			j = shape[0] + j;
+        }
+
+		Validate2DIndex(i, j);
+
 		int index = (i * shape[1]) + j;
 		data[index] = e;
 	}
@@ -73,6 +93,12 @@ public class Matrix : LArray {
 	}
 
 	public Matrix GetRow(int i) {
+		if(i < 0) {
+			i = shape[0] + i;
+		}
+
+		ValidateDataIndex(i, 0);
+
 		Matrix row = Zeros(1, shape[1]);
 
 		for(int k = 0; k < shape[1]; k++) {
@@ -83,6 +109,12 @@ public class Matrix : LArray {
 	}
 
 	public Matrix GetColumn(int j) {
+		if(j < 0) {
+			j = shape[1] + j;
+		}
+
+		ValidateDataIndex(j, 1);
+
 		Matrix column = Zeros(shape[0], 1);
 		
 		for(int k = 0; k < shape[0]; k++) {
@@ -142,6 +174,11 @@ public class Matrix : LArray {
 		if(n == -1) {
 			n = data.Length;
 		}
+
+		if(m < data.Length || n < data.Length) {
+			throw new System.ArgumentException($"m {m} and/or {n} are less than given data length {data.Length}.");
+		}
+
 		Matrix matrix = Zeros(m, n);
 
 		int max = System.Math.Min(System.Math.Min(m, n), data.Length);
@@ -160,6 +197,7 @@ public class Matrix : LArray {
 //------------------------------------------------------------------------------
 	//ADDITION
 	public static Matrix Add(Matrix A, Matrix B) {
+		ValidateNotNullArgument(A);
 		Matrix C = new Matrix(A);
 		C.Add(B);
 		return C;
@@ -171,6 +209,7 @@ public class Matrix : LArray {
 
 	//SCALAR MULTIPLICATION
 	public static Matrix Scale(Matrix A, float c) {
+		ValidateNotNullArgument(A);
 		Matrix B = new Matrix(A);
 		B.Scale(c);
 		return B;
@@ -186,6 +225,7 @@ public class Matrix : LArray {
 
 	//SUBTRACT
 	public static Matrix Negate(Matrix A) {
+		ValidateNotNullArgument(A);
 		Matrix B = new Matrix(A);
 		B.Negate();
 		return B;
@@ -196,6 +236,7 @@ public class Matrix : LArray {
 	}
 
 	public static Matrix Subtract(Matrix A, Matrix B) {
+		ValidateNotNullArgument(A);
 		Matrix C = new Matrix(A);
 		C.Subtract(B);
 		return C;
@@ -232,6 +273,7 @@ public class Matrix : LArray {
 
 
 	public static Matrix MatMul(Matrix A, Matrix B, bool parallel=false) {
+		ValidateMatrixMulSize(A, B);
 		// (m x n) X (n x p) -> m x p
 		int m = A.GetShape()[0];
 		int n = A.GetShape()[1];
@@ -308,6 +350,8 @@ public class Matrix : LArray {
 
 
 	public static Matrix NaiveMul(Matrix A, Matrix B) {
+		ValidateMatrixMulSize(A, B);
+
 		int m = A.GetShape()[0];
 		int n = A.GetShape()[1];
 		int p = B.GetShape()[1];
@@ -330,6 +374,8 @@ public class Matrix : LArray {
 	
 	//https://en.wikipedia.org/wiki/Strassen_algorithm
 	public static Matrix StrassenMul(Matrix A, Matrix B, bool parallel=true) {
+		ValidateMatrixMulSize(A, B);
+
 		if(A.GetLength() < STRASSEN_MATRIX_SIZE && B.GetLength() < STRASSEN_MATRIX_SIZE) {
 			return MatMul(A, B, parallel);
         }
@@ -406,6 +452,10 @@ public class Matrix : LArray {
 	public static Vector MatVecMul(Matrix A, Vector x) {
 		int m = A.GetShape()[0];
 		int n = A.GetShape()[1];
+		if(n != x.GetLength()) {
+			throw new System.ArgumentException($"Matrix A shape at index 1 {n} does not match vector length {x.GetLength()}.");
+        }
+
 		Vector y = Vector.Zeros(m);
         
         float[] arrA = A.AccessData();
@@ -425,8 +475,8 @@ public class Matrix : LArray {
 		return y;
     }
 	
-	//TODO : ERROR if A.shape != B.shape
 	public static Matrix HadamardProduct(Matrix A, Matrix B) {
+		ValidateNotNullArgument(A);
 		Matrix C = new Matrix(A);
 		C.HadamardProduct(B);
 		return C;
@@ -434,6 +484,7 @@ public class Matrix : LArray {
 
 	//TRANSPOSE
 	public static Matrix Transpose(Matrix A) {
+		ValidateNotNullArgument(A);
 		int m = A.GetShape()[0];
 		int n = A.GetShape()[1];
 		Matrix AT = Zeros(n, m);
@@ -457,11 +508,12 @@ public class Matrix : LArray {
 		result = (float)System.Math.Sqrt(result);
 
 		return (float)System.Math.Sqrt(result);
-		}
+	}
 	
 	//TRACE
-	//TODO : ERROR if shape[0] != shape[1]
 	public float Trace() {
+		ValidateSquareMatrix();
+
 		float result = 0;
 		for(int i = 0; i < shape[0]; i++) {
 			result += GetElement(i, i);
@@ -471,8 +523,9 @@ public class Matrix : LArray {
 	}
 
 	//DETERMINANT
-	//TODO : ERROR if shape[0] != shape[1]
 	public float Determinant(){
+		ValidateSquareMatrix();
+
 		int n = shape[0];
 		if(n == 2) {
 			float a = GetElement(0, 0);
@@ -530,6 +583,36 @@ public class Matrix : LArray {
 
 		return true;
 	}
+
+// VALDIDATION FUNCTION(s)
+//------------------------------------------------------------------------------
+	protected void Validate2DIndex(int i, int j) {
+		bool ierror = i < 0 || i >= shape[0];
+		bool jerror = j < 0 || j >= shape[1];
+		if(ierror && jerror) {
+			throw new System.IndexOutOfRangeException($"Index i {i} and index j {j} are out of bounds of expected max values {shape[0] - 1} and {shape[1] - 1} respectively.");
+		}
+
+		if(ierror) {
+			throw new System.IndexOutOfRangeException($"Index i {i} is out of bounds of expected max value {shape[0] - 1}.");
+		}
+
+		if(jerror) {
+			throw new System.IndexOutOfRangeException($"Index j {j} is out of bounds of expected max value {shape[1] - 1}.");
+		}
+	}
+
+	protected static void ValidateMatrixMulSize(Matrix A, Matrix B) {
+		if(A.GetShape()[1] != B.GetShape()[0]) {
+			throw new System.ArgumentException($"Matrix A shape size at the index 1 {A.GetShape()[1]} does not match Matrix B shape size at index 0 {B.GetShape()[0]}");
+		}
+    }
+
+	protected void ValidateSquareMatrix() {
+		if(shape[0] != shape[1]) {
+			throw new System.ArgumentException($"Shape at index 0 {shape[0]} does not match shape at index 1 {shape[1]}");
+		}
+    }
 
 }
 } // END namespace lmath

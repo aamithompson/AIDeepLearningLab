@@ -2,7 +2,7 @@
 // Filename: Tensor.cs
 // Author: Aaron Thompson
 // Date Created: 5/20/2020
-// Last Updated: 9/11/2025
+// Last Updated: 9/17/2025
 //
 // Description:
 //==============================================================================
@@ -25,7 +25,7 @@ public class Tensor : LArray {
 
 	public Tensor(float[] data, int[] shape) {
 		this.data = new float[data.Length];
-		shape = new int[shape.Length];
+		this.shape = new int[shape.Length];
 		Reshape(shape);
 		SetData(data);
 	}
@@ -44,9 +44,7 @@ public class Tensor : LArray {
 // DEFAULT OBJECTS
 //------------------------------------------------------------------------------
 	public static Tensor Zeros(int[] shape) {
-		Tensor tensor = new Tensor();
-
-		tensor.Reshape(shape);
+		Tensor tensor = new Tensor(new float[0], shape);
 
 		return tensor;
 	}
@@ -54,7 +52,6 @@ public class Tensor : LArray {
 	public static Tensor Ones(int[] shape) {
 		Tensor tensor = Zeros(shape);
 		
-		tensor.Reshape(shape);
 		tensor.Fill(1.0f);
 
 		return tensor;
@@ -64,6 +61,7 @@ public class Tensor : LArray {
 //------------------------------------------------------------------------------
 	//ADDITION
 	public static Tensor Add(Tensor A, Tensor B) {
+		ValidateNotNullArgument(A);
 		Tensor C = new Tensor(A);
 		C.Add(B);
 		return C;
@@ -75,6 +73,7 @@ public class Tensor : LArray {
 	
 	//SCALAR MULTIPLICATION
 	public static Tensor Scale(float c, Tensor A) {
+		ValidateNotNullArgument(A);
 		Tensor B = new Tensor(A);
 		B.Scale(c);
 		return B;
@@ -90,6 +89,7 @@ public class Tensor : LArray {
 
 	//SUBTRACT
 	public static Tensor Negate(Tensor A) {
+		ValidateNotNullArgument(A);
 		Tensor B = new Tensor(A);
 		B.Negate();
 		return B;
@@ -100,6 +100,7 @@ public class Tensor : LArray {
 	}
 
 	public static Tensor Subtract(Tensor A, Tensor B) {
+		ValidateNotNullArgument(A);
 		Tensor C = new Tensor(A);
 		C.Subtract(B);
 		return C;
@@ -110,6 +111,7 @@ public class Tensor : LArray {
 	}
 
 	public static Tensor HadamardProduct(Tensor A, Tensor B) {
+		ValidateNotNullArgument(A);
 		Tensor C = new Tensor(A);
 		C.HadamardProduct(B);
 		return C;

@@ -2,7 +2,7 @@
 // Filename: Vector.cs
 // Author: Aaron Thompson
 // Date Created: 6/11/2020
-// Last Updated: 9/11/2025
+// Last Updated: 9/17/2025
 //
 // Description:
 //==============================================================================
@@ -62,6 +62,8 @@ public class Vector : LArray {
 //------------------------------------------------------------------------------
 	//ADDITION
 	public static Vector Add(Vector v1, Vector v2) {
+		ValidateNotNullArgument(v1);
+
 		Vector v3 = new Vector(v1);
 		v3.Add(v2);
 		return v3;
@@ -73,6 +75,8 @@ public class Vector : LArray {
 	
 	//SCALAR MULTIPLICATION
 	public static Vector Scale(Vector v1, float c) {
+		ValidateNotNullArgument(v1);
+
 		Vector v2 = new Vector(v1);
 		v2.Scale(c);
 		return v2;
@@ -88,6 +92,8 @@ public class Vector : LArray {
 	
 	//SUBTRACT
 	public static Vector Negate(Vector v1) {
+		ValidateNotNullArgument(v1);
+
 		Vector v2 = new Vector(v1);
 		v2.Negate();
 		return v2;
@@ -98,6 +104,8 @@ public class Vector : LArray {
 	}
 
 	public static Vector Subtract(Vector v1, Vector v2) {
+		ValidateNotNullArgument(v1);
+
 		Vector v3 = new Vector(v1);
 		v3.Subtract(v2);
 		return v3;
@@ -108,6 +116,8 @@ public class Vector : LArray {
 	}
 
 	public static Vector HadamardProduct(Vector v1, Vector v2) {
+		ValidateNotNullArgument(v1);
+
 		Vector v3 = new Vector(v1);
 		v3.HadamardProduct(v2);
 		return v3;
@@ -139,8 +149,10 @@ public class Vector : LArray {
 	}
 
 	//DOT PRODUCT
-	//TODO : ERROR if length != vector.length
 	public float Dot(Vector vector) {
+		ValidateNotNullArgument(vector);
+		ValidateEqualShape(vector);
+
 		float sum = 0;
 
 		float[] data = vector.AccessData();
@@ -154,6 +166,7 @@ public class Vector : LArray {
 	}
 
 	public static float Dot(Vector v1, Vector v2) {
+		ValidateNotNullArgument(v1);
 		return v1.Dot(v2);
 	}
 
@@ -161,9 +174,38 @@ public class Vector : LArray {
 		return Dot(v1, v2);
 	}
 
+	//CROSS PRODUCT
+	//TODO: NEEDS TESTING
+	public Vector Cross(Vector vector) {
+		ValidateNotNullArgument(vector);
+		ValidateEqualShape(vector);
+
+		if(this.data.Length != 3) {
+			throw new System.ArgumentException($"Vector length {this.data.Length} does not equal the expected length 3.");
+        }
+
+		Vector i = new Vector(new float[] {1.0f, 0.0f, 0.0f});
+		Vector j = new Vector(new float[] {0.0f, 1.0f, 0.0f});
+		Vector k = new Vector(new float[] {0.0f, 0.0f, 1.0f});
+
+		float[] data = vector.AccessData();
+		Vector result = i * new Matrix(new float[,] {{this.data[1], this.data[2]}, {data[1], data[2]}}).Determinant();
+		result -= j * new Matrix(new float[,] {{this.data[0], this.data[2]}, {data[0], data[2]}}).Determinant();
+		result += k * new Matrix(new float[,] {{this.data[0], this.data[1]}, {data[0], data[1]}}).Determinant();
+
+		return result;
+    }
+
+	public static Vector Cross(Vector v1, Vector v2) {
+		ValidateNotNullArgument(v1);
+
+		return v1.Cross(v2);
+    }
+
 	//NORM
-	//TODO : ERROR if all elements are 0
 	public float Norm(int n = 2) {
+		ValidateNotEmpty();
+
 		double result = 0;
 
 		for(int i = 0; i < length; i++) {
@@ -178,6 +220,8 @@ public class Vector : LArray {
 	}
 
 	public float MaxNorm() {
+		ValidateNotEmpty();
+
 		float result = 0;
 
 		for(int i = 0; i < length; i++) {
@@ -188,8 +232,18 @@ public class Vector : LArray {
 	}
 
 	//UNIT
-	//TODO : ERROR if all elements are 0
 	public Vector Unit() {
+		bool nonzero = false;
+		for(int i = 0; i < this.data.Length; i++) {
+			if(this.data[i] != 0) {
+				nonzero = true;
+				break;
+            }
+		}
+		if(!nonzero) {
+			throw new System.ArgumentException("All elements of data are zero. Data must contain at least one nonzero value.");
+		}
+
 		Vector unit = Zeros(length);
 		float norm = Norm(2);
 
@@ -207,7 +261,7 @@ public class Vector : LArray {
 	public bool IsUnit() {
 		float norm = Norm(2);
 
-		return System.Math.Abs(1.0 - norm) < epsilon;
+		return System.MathF.Abs(1.0f - norm) < epsilon;
 	}
 
 	public static bool IsUnit(Vector v1) {
