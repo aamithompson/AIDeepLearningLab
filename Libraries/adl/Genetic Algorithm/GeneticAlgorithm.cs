@@ -14,6 +14,7 @@ using statistics;
 
 namespace adl {
 public class GeneticAlgorithm {
+	public static int MAX_ATTEMPTS = 16;
 // VARIABLES
 //------------------------------------------------------------------------------
 	private List<Individual> population;
@@ -148,8 +149,10 @@ public class GeneticAlgorithm {
 		for(int i = 0; i < populationCount - 1; i += 2) {
 				Individual parentA = SelectIndividual();
 				Individual parentB = SelectIndividual();
-				while(parentA == parentB) {
+				int attempts = 0;
+				while(parentA == parentB && attempts < MAX_ATTEMPTS) {
 					parentB = SelectIndividual();
+					attempts++;
                 }
 
 				Individual[] offspring = Offspring(parentA, parentB);
@@ -160,8 +163,10 @@ public class GeneticAlgorithm {
 		if(populationCount%2 == 1) {
 			Individual parentA = SelectIndividual();
 			Individual parentB = SelectIndividual();
-			while (parentA == parentB) {
+			int attempts = 0;
+			while (parentA == parentB && attempts < MAX_ATTEMPTS) {
 				parentB = SelectIndividual();
+				attempts++;
 			}
 
 			newPopulation.Add(Offspring(parentA, parentB)[0]);
@@ -174,7 +179,7 @@ public class GeneticAlgorithm {
 		Individual childB = new Individual(parentA.data);
 
 		int n = childA.data.GetLength();
-		if(crossPoints == 0) {
+		if(crossPoints == 0 || n <= 1) {
 			for(int i = 0; i < n; i++) {
 				float value = (parallel) ? ParallelRandom.NextFloat() : UnityEngine.Random.value;
 				bool flip = (value > 0.5f);

@@ -37,7 +37,7 @@ public class Consumable : MonoBehaviour {
             return new Nutrition(0, 0);
         }
 
-        int ratio = portions / maxPortions;
+        float ratio = (float)portions / maxPortions;
         return new Nutrition(totalNutrition.satiation * ratio,
                              totalNutrition.hydration * ratio);
     }
@@ -52,7 +52,7 @@ public class Consumable : MonoBehaviour {
 
         if(maxPortions > 0) {
             this.portions -= portions;
-            if(portions <= 0) {
+            if(this.portions <= 0) {
                 Destroy(this.gameObject);
             }
         }

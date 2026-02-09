@@ -2,14 +2,16 @@
 // Filename: UAgentSensor.cs
 // Author: Aaron Thompson
 // Date Created: 8/10/2020
-// Last Updated: 5/19/2025
+// Last Updated: 2/5/2026
 //
 // Description:
 //==============================================================================
+using lmath;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
-using lmath;
+using UnityEngine.UIElements;
 //------------------------------------------------------------------------------
 [RequireComponent (typeof(UAgentCore))]
 public class UAgentSensor : MonoBehaviour {
@@ -23,6 +25,8 @@ public class UAgentSensor : MonoBehaviour {
 	public Tensor sightData;
 	public static int camVectorSize = 3;
 	public Tensor camData;
+	public static int hearingVectorSize = 1;
+	public Tensor hearingData;
 
 	//SIGHT SETTING(s)
 	public bool hasSight = true;
@@ -54,16 +58,25 @@ public class UAgentSensor : MonoBehaviour {
 
 	//AUDITORY SETTING(s)
 	public bool hasHearing = true;
+    public SoundManager soundManager;
+	public int hearingSectors = 1;
+	public float hearingSectorAngle { get { return 360.0f / hearingSectors; } }
+	public float maxHearingDistance = 1.0f;
+	public AnimationCurve hearingFalloff;
+    [Range(0.001f, 2.0f)]
+    public float soundUpdateDeltaTime = 0.25f;
 
-	//DEBUG SETTING(s)
-	public bool debugEnabled = false;
+    //DEBUG SETTING(s)
+    public bool debugEnabled = false;
 	public int debugDrawSightDiv = 16;
 	public Color debugDrawSightColor = Color.white;
+	public int debugDrawHearingDiv = 64;
+    public Color debugDrawHearingColor = Color.steelBlue;
 
 
-// MONOBEHAVIOR METHODS
-//------------------------------------------------------------------------------
-	void Awake(){
+    // MONOBEHAVIOR METHODS
+    //------------------------------------------------------------------------------
+    void Awake(){
 		//Sight
 		sightData = Tensor.Zeros(new int[] { rows, columns, sightVectorSize });
 
@@ -78,22 +91,29 @@ public class UAgentSensor : MonoBehaviour {
 			cam.enabled = false;
 		}
 		camData = Tensor.Zeros(new int[] { camWidth * camHeight, camVectorSize });
+
+		//Auditory
+		soundManager = FindAnyObjectByType<SoundManager>();
+		hearingData = Tensor.Zeros(new int[] { hearingSectors, sightVectorSize });
 	}
 
 	void Start(){
 		StartCoroutine(IESight());
 		StartCoroutine(IECam());
+		StartCoroutine(IEHearing());
 	}
 	
 	void Update(){
-		if (hasSight) {
+		if(hasSight) {
 			if(debugEnabled){
 				DebugDrawSight();
 			}
 		}
 
-		if (hasHearing) {
-
+		if(hasHearing) {
+			if(debugEnabled) { 
+				DebugDrawHearing();
+			}
 		}
 	}
 
@@ -284,7 +304,62 @@ public class UAgentSensor : MonoBehaviour {
 	}
 // AUDITORY
 //------------------------------------------------------------------------------
+	IEnumerator IEHearing(){
+		while(true) {
+            hearingData.Fill(0.0f);
+            List<SoundEvent> events = soundManager.GetSounds(transform.position, maxHearingDistance);
+			for(int i = 0; i < events.Count; i++) {
+				int sector = GetHearingSector(events[i].position);
+				float distance = (events[i].position - transform.position).magnitude;
+				float t = Mathf.Clamp01(distance/maxHearingDistance);
 
+				float volume = events[i].sound.GetSound() * hearingFalloff.Evaluate(t);
+                hearingData[sector] = Mathf.Max(hearingData[sector], volume);
+			}
+
+            yield return new WaitForSeconds(soundUpdateDeltaTime);
+        }
+	}
+
+	private int GetHearingSector(Vector3 position) {
+        Vector2 origin = new Vector2(transform.position.x, transform.position.z);
+        Vector2 forward = new Vector2(transform.forward.x, transform.forward.z);
+        Vector2 target = new Vector2(position.x, position.z);
+        float angle = Vector2.SignedAngle(forward.normalized, (target - origin).normalized);
+		return ((int)(angle / hearingSectors) % hearingSectors + hearingSectors);
+    }
+
+	private void DebugDrawHearing() {
+        Vector2 position2D = new Vector2(transform.position.x, transform.position.z);
+        Vector2 forward2D = new Vector2(transform.forward.x, transform.forward.z).normalized;
+        float angle = -1 * (oRSAngle);
+        float angleAdjust = 360.0f / debugDrawHearingDiv;
+        float tSector = 0.0f;
+        float tSectorAdjust = 1.0f / hearingSectors;
+        Vector2 maxForward2D = (forward2D * maxHearingDistance);
+
+        //Radius Line(s)
+        for (int i = 0; i < hearingSectors; i++) {
+            tSector += tSectorAdjust;
+            float tAngle = Mathf.Lerp(0.0f, 360.0f, tSector);
+            Vector2 columnA = position2D;
+            Vector2 columnB = position2D + Rotate(maxForward2D, tAngle);
+            Vector3 columnStart = new Vector3(columnA.x, transform.position.y, columnA.y);
+            Vector3 columnEnd = new Vector3(columnB.x, transform.position.y, columnB.y);
+            Debug.DrawLine(columnStart, columnEnd, debugDrawHearingColor);
+        }
+
+        //Circumference Line(s)
+        for (int i = 0; i < debugDrawHearingDiv; i++) {
+            Vector2 oA = position2D + Rotate(maxForward2D, angle);
+            Vector2 oB = position2D + Rotate(maxForward2D, angle + angleAdjust);
+            Vector3 oStart = new Vector3(oA.x, transform.position.y, oA.y);
+            Vector3 oEnd = new Vector3(oB.x, transform.position.y, oB.y);
+            Debug.DrawLine(oStart, oEnd, debugDrawHearingColor);
+
+            angle += angleAdjust;
+        }
+    }
 // HELPER FUNCTION(s)
 //------------------------------------------------------------------------------
 	private static Vector2 Rotate(Vector2 v, float degrees){

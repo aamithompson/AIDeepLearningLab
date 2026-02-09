@@ -2,7 +2,7 @@
 // Filename: UAgentCombat.cs
 // Author: Aaron Thompson
 // Date Created: 2/21/2022
-// Last Updated: 5/4/2022
+// Last Updated: 10/2/2025
 //
 // Description:
 //==============================================================================
@@ -35,6 +35,7 @@ public class UAgentCombat : MonoBehaviour {
 // MONOBEHAVIOR METHODS
 //------------------------------------------------------------------------------
     void Start() {
+        health = maxHealth;
         UpdateColliders();
     }
 
@@ -42,8 +43,18 @@ public class UAgentCombat : MonoBehaviour {
 
     }
 
-// FUNCTIONS
-//------------------------------------------------------------------------------
+    private void OnDestroy() {
+        if (dColliders != null) {
+            for(int i = 0; i < dColliders.Count; i++) {
+                for (int j = 0; j < dColliders[i].Count; j++) {
+                    Destroy(dColliders[i][j]);
+                }
+            }
+        }
+    }
+
+    // FUNCTIONS
+    //------------------------------------------------------------------------------
     public void CombatMove(int i=-1) {
         if(i != -1 && currentAction != i) {
             step = 0;
@@ -96,6 +107,14 @@ public class UAgentCombat : MonoBehaviour {
     }
 
     public void UpdateColliders() {
+        if (dColliders != null) {
+            for(int i = 0; i < dColliders.Count; i++) {
+                for (int j = 0; j < dColliders[i].Count; j++) {
+                    Destroy(dColliders[i][j]);
+                }
+            }
+        }
+
         dColliders = new List<List<GameObject>>();
 
         for (int i = 0; i < cActions.Count; i++) {
