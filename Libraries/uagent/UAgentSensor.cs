@@ -2,7 +2,7 @@
 // Filename: UAgentSensor.cs
 // Author: Aaron Thompson
 // Date Created: 8/10/2020
-// Last Updated: 2/5/2026
+// Last Updated: 2/11/2026
 //
 // Description:
 //==============================================================================
@@ -22,11 +22,11 @@ public class UAgentSensor : MonoBehaviour {
 
 	//DATA
 	public static int sightVectorSize = 6;
-	public Tensor sightData;
+	public Tensor sightData; //(r, g, b, xscale, yscale, zscale) * (rows * columns)
 	public static int camVectorSize = 3;
-	public Tensor camData;
+	public Tensor camData; //(r, g, b) * (pixel width * pixel height)
 	public static int hearingVectorSize = 1;
-	public Tensor hearingData;
+	public Tensor hearingData; //(volume) * (sectors)
 
 	//SIGHT SETTING(s)
 	public bool hasSight = true;
@@ -58,7 +58,6 @@ public class UAgentSensor : MonoBehaviour {
 
 	//AUDITORY SETTING(s)
 	public bool hasHearing = true;
-    public SoundManager soundManager;
 	public int hearingSectors = 1;
 	public float hearingSectorAngle { get { return 360.0f / hearingSectors; } }
 	public float maxHearingDistance = 1.0f;
@@ -93,7 +92,6 @@ public class UAgentSensor : MonoBehaviour {
 		camData = Tensor.Zeros(new int[] { camWidth * camHeight, camVectorSize });
 
 		//Auditory
-		soundManager = FindAnyObjectByType<SoundManager>();
 		hearingData = Tensor.Zeros(new int[] { hearingSectors, sightVectorSize });
 	}
 
@@ -307,7 +305,7 @@ public class UAgentSensor : MonoBehaviour {
 	IEnumerator IEHearing(){
 		while(true) {
             hearingData.Fill(0.0f);
-            List<SoundEvent> events = soundManager.GetSounds(transform.position, maxHearingDistance);
+            List<SoundEvent> events = uAgentCore.soundManager.GetSounds(transform.position, maxHearingDistance);
 			for(int i = 0; i < events.Count; i++) {
 				int sector = GetHearingSector(events[i].position);
 				float distance = (events[i].position - transform.position).magnitude;

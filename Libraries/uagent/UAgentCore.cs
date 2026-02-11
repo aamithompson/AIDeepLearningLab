@@ -2,7 +2,7 @@
 // Filename: UAgentCore.cs
 // Author: Aaron Thompson
 // Date Created: 8/10/2020
-// Last Updated: 5/10/2022
+// Last Updated: 2/10/2026
 //
 // Description:
 //==============================================================================
@@ -38,8 +38,11 @@ public class UAgentCore : MonoBehaviour {
 	public bool initiatingCmd;
 	public bool runningCmd;
 
-	// DEBUG SETTING(s)
-	public bool debugEnabled = false;
+    // EXTERNAL MANAGER(s)
+    public SoundManager soundManager;
+
+    // DEBUG SETTING(s)
+    public bool debugEnabled = false;
 
 // MONOBEHAVIOR METHODS
 //------------------------------------------------------------------------------
@@ -89,7 +92,9 @@ public class UAgentCore : MonoBehaviour {
 		if (hasCombat) { uAgentCombat.uAgentCore = this; }
 		if (hasData) { uAgentData.uAgentCore = this; }
 		if (hasCognition) { uAgentCognition.uAgentCore = this; }
-	}
+
+        soundManager = FindAnyObjectByType<SoundManager>();
+    }
 
 	public void Override(Vector v, string category, string function, int index=0) {
 		currentCmd = new Command(category, function, index, v);

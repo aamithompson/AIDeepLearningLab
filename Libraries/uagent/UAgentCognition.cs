@@ -287,7 +287,7 @@ public class UAgentCognition : MonoBehaviour {
 		int camHeight = uAgentCore.uAgentSensor.camHeight;
 		int camVSize = UAgentSensor.camVectorSize;
 		int hearingSectors = uAgentCore.uAgentSensor.hearingSectors;
-		int sectorsVSize = UAgentSensor.camVectorSize;
+		int hearingVSize = UAgentSensor.hearingVectorSize;
 		int index = 0;
 		if(uAgentCore.hasSensor) {
 			for(int i = 0; i < rows; i++) {
@@ -310,10 +310,8 @@ public class UAgentCognition : MonoBehaviour {
                 }
             }
 
-			Debug.Log(inputSize);
-			for(int i = 0; i < hearingSectors; i++) {
-				for(int j = 0; j < sectorsVSize; j++) {
-                    Debug.Log(index);
+            for (int i = 0; i < hearingSectors; i++) {
+				for(int j = 0; j < hearingVSize; j++) {
                     inputVector[index] = uAgentCore.uAgentSensor.hearingData[i];
 					index++;
 				}
