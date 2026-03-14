@@ -2,7 +2,7 @@
 // Filename: UAgentMovement.cs
 // Author: Aaron Thompson
 // Date Created: 8/17/2020
-// Last Updated: 1/31/2022
+// Last Updated: 2/16/2026
 //
 // Description:
 //==============================================================================
@@ -39,6 +39,9 @@ public class UAgentMovement : MonoBehaviour {
 	public Vector3[] path;
 	public int pathIndex = 0;
 	public int maxNodes = -1;
+
+	//SOUND
+	public float lastSoundTime;
 
 
 // MONOBEHAVIOR METHODS
@@ -88,9 +91,14 @@ public class UAgentMovement : MonoBehaviour {
             }
         }
 
-		//Angular Calculations
+		if(uAgentCore.soundManager != null && (lastSoundTime + ms.eventSound.duration <= Time.time || lastSoundTime == 0.0f)) {
+			uAgentCore.soundManager.AddSound(new ESound(ms.eventSound), transform.position);
+			lastSoundTime = Time.time;
+        }
 
-		Vector2 from = new Vector2(transform.forward.x, transform.forward.z);
+        //Angular Calculations
+
+        Vector2 from = new Vector2(transform.forward.x, transform.forward.z);
 		Vector3 to = new Vector2(direction.x, direction.z);
 		int angleDir = (Vector2.SignedAngle(from, to) >= 0) ? -1 : 1;
 		if (angleDir == 1 && angularVelocity < ms.minAngularVelocity) {
@@ -211,7 +219,6 @@ public class UAgentMovement : MonoBehaviour {
 		Vector3 v = transform.forward;
 		Vector3 target = transform.position;
 		target += new Vector3((cos * v.x) - (sin * v.z), 0.0f, (sin * v.x) + (cos * v.z));
-		Debug.Log(angularVelocity);
 
 		//Transformations
 		transform.rotation = FixedRotateTowards(target, angularVelocity, 'y');
@@ -275,6 +282,7 @@ public class UAgentMovement : MonoBehaviour {
 		public float maxAngularVelocity;
 		public float angularAcceleration;
 		public float staminaPerSecond;
+		public ESound eventSound;
 	}
 }
 //==============================================================================

@@ -2,7 +2,7 @@
 // Filename: UAgentSensor.cs
 // Author: Aaron Thompson
 // Date Created: 8/10/2020
-// Last Updated: 2/11/2026
+// Last Updated: 2/16/2026
 //
 // Description:
 //==============================================================================
@@ -92,7 +92,7 @@ public class UAgentSensor : MonoBehaviour {
 		camData = Tensor.Zeros(new int[] { camWidth * camHeight, camVectorSize });
 
 		//Auditory
-		hearingData = Tensor.Zeros(new int[] { hearingSectors, sightVectorSize });
+		hearingData = Tensor.Zeros(new int[] { hearingSectors, hearingVectorSize });
 	}
 
 	void Start(){
@@ -183,7 +183,7 @@ public class UAgentSensor : MonoBehaviour {
 			RenderTexture.active = camRTex;
 			cam.Render();
 			tCam2DTex.ReadPixels(new Rect(0, 0, camWidth, camHeight), 0, 0);
-			tCam2DTex.Apply();
+			//tCam2DTex.Apply();
 			tCamColors = tCam2DTex.GetPixels();
 			RenderTexture.active = temp;
 
@@ -324,7 +324,10 @@ public class UAgentSensor : MonoBehaviour {
         Vector2 forward = new Vector2(transform.forward.x, transform.forward.z);
         Vector2 target = new Vector2(position.x, position.z);
         float angle = Vector2.SignedAngle(forward.normalized, (target - origin).normalized);
-		return ((int)(angle / hearingSectors) % hearingSectors + hearingSectors);
+		if(angle < 0.0f) {
+			angle += 360.0f;
+		}
+		return (int)(angle / hearingSectorAngle) % hearingSectors;
     }
 
 	private void DebugDrawHearing() {

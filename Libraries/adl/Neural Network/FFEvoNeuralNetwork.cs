@@ -12,6 +12,7 @@ using System.IO;
 using UnityEngine;
 using lmath;
 using statistics;
+using adl.genetics;
 
 namespace adl {
 public class FFEvoNeuralNetwork {
@@ -98,7 +99,7 @@ public class FFEvoNeuralNetwork {
 
 				GA.Continue(1);
 
-                Matrix bestd = GA.GetBestFit()[0];
+                Vector bestd = GA.GetBestFit()[0];
                 int indexd = 0;
                 for(int l = 0; l < NN.weights.Count; l++) {
                     for(int j = 0; j < NN.weights[l].GetLength(); j++) {
@@ -122,7 +123,7 @@ public class FFEvoNeuralNetwork {
 			Debug.Log("[Neural Network] Epoch [" + (k+1).ToString() + "] / [" + epochs.ToString() + "] complete. (Batch Size: " + miniBatchSize.ToString() + ")");
         }
 
-        Matrix best = GA.GetBestFit()[0];
+        Vector best = GA.GetBestFit()[0];
         int index = 0;
         for(int i = 0; i < NN.weights.Count; i++) {
             for(int j = 0; j < NN.weights[i].GetLength(); j++) {
@@ -137,7 +138,7 @@ public class FFEvoNeuralNetwork {
         }
     }
 
-    public float NetworkScore(Matrix data) {
+    public float NetworkScore(Vector data) {
         float score = 0;
 
         int index = 0;
@@ -175,7 +176,7 @@ public class FFEvoNeuralNetwork {
             n += NN.biases[i].GetLength();
         }
 
-        return n == GA.minValueMatrix.GetLength();
+        return n == GA.minValueVector.GetLength();
     }
 
     public void UpdateGA() {
@@ -189,50 +190,50 @@ public class FFEvoNeuralNetwork {
 
         GA.distributionType = distributionType;
         if(distributionType == Distribution.Uniform) {
-            GA.minValueMatrix = Matrix.Zeros(nW + nB, 1);
-            GA.maxValueMatrix = Matrix.Zeros(nW + nB, 1);
-            GA.minMutationMatrix = Matrix.Zeros(nW + nB, 1);
-            GA.maxMutationMatrix = Matrix.Zeros(nW + nB, 1);
-            GA.meanValueMatrix = new Matrix();
-            GA.stdDevValueMatrix = new Matrix();
-            GA.meanMutationMatrix = new Matrix();
-            GA.stdDevMutationMatrix = new Matrix();
+            GA.minValueVector = Vector.Zeros(nW + nB);
+            GA.maxValueVector = Vector.Zeros(nW + nB);
+            GA.minMutationVector = Vector.Zeros(nW + nB);
+            GA.maxMutationVector = Vector.Zeros(nW + nB);
+            GA.meanValueVector = new Vector();
+            GA.stdDevValueVector = new Vector();
+            GA.meanMutationVector = new Vector();
+            GA.stdDevMutationVector = new Vector();
 
             for (int i = 0; i < nW; i++) {
-                GA.minValueMatrix[i] = minWeight;
-                GA.maxValueMatrix[i] = maxWeight;
-                GA.minMutationMatrix[i] = minWeightMutation;
-                GA.maxMutationMatrix[i] = maxWeightMutation;
+                GA.minValueVector[i] = minWeight;
+                GA.maxValueVector[i] = maxWeight;
+                GA.minMutationVector[i] = minWeightMutation;
+                GA.maxMutationVector[i] = maxWeightMutation;
             }
 
             for (int i = nB; i < nW + nB; i++) {
-                GA.minValueMatrix[i] = minBias;
-                GA.maxValueMatrix[i] = maxBias;
-                GA.minMutationMatrix[i] = minBiasMutation;
-                GA.maxMutationMatrix[i] = maxBiasMutation;
+                GA.minValueVector[i] = minBias;
+                GA.maxValueVector[i] = maxBias;
+                GA.minMutationVector[i] = minBiasMutation;
+                GA.maxMutationVector[i] = maxBiasMutation;
             }
         } else if(distributionType == Distribution.Gaussian) {
-            GA.minValueMatrix = new Matrix();
-            GA.maxValueMatrix = new Matrix();
-            GA.minMutationMatrix = new Matrix();
-            GA.maxMutationMatrix = new Matrix();
-            GA.meanValueMatrix = Matrix.Zeros(nW + nB, 1);
-            GA.stdDevValueMatrix = Matrix.Zeros(nW + nB, 1);
-            GA.meanMutationMatrix = Matrix.Zeros(nW + nB, 1);
-            GA.stdDevMutationMatrix = Matrix.Zeros(nW + nB, 1);
+            GA.minValueVector = new Vector();
+            GA.maxValueVector = new Vector();
+            GA.minMutationVector = new Vector();
+            GA.maxMutationVector = new Vector();
+            GA.meanValueVector = Vector.Zeros(nW + nB);
+            GA.stdDevValueVector = Vector.Zeros(nW + nB);
+            GA.meanMutationVector = Vector.Zeros(nW + nB);
+            GA.stdDevMutationVector = Vector.Zeros(nW + nB);
 
             for (int i = 0; i < nW; i++) {
-                GA.meanValueMatrix[i] = meanWeight;
-                GA.stdDevValueMatrix[i] = stdDevWeight;
-                GA.meanMutationMatrix[i] = meanWeightMutation;
-                GA.stdDevMutationMatrix[i] = stdDevWeightMutation;
+                GA.meanValueVector[i] = meanWeight;
+                GA.stdDevValueVector[i] = stdDevWeight;
+                GA.meanMutationVector[i] = meanWeightMutation;
+                GA.stdDevMutationVector[i] = stdDevWeightMutation;
             }
 
             for (int i = nW; i < nW + nB; i++) {
-                GA.meanValueMatrix[i] = meanBias;
-                GA.stdDevValueMatrix[i] = stdDevBias;
-                GA.meanMutationMatrix[i] = meanBiasMutation;
-                GA.stdDevMutationMatrix[i] = stdDevBiasMutation;
+                GA.meanValueVector[i] = meanBias;
+                GA.stdDevValueVector[i] = stdDevBias;
+                GA.meanMutationVector[i] = meanBiasMutation;
+                GA.stdDevMutationVector[i] = stdDevBiasMutation;
             }
         }
 

@@ -2,9 +2,13 @@
 // Filename: GeneticAlgorithm.cs
 // Author: Aaron Thompson
 // Date Created: 6/19/2020
-// Last Updated: 10/2/2025
+// Last Updated: 3/14/2026
 //
-// Description:
+// Description: An implementation of a genetic algorithm class which can be
+// configured and uses vectors from the lmath library for representation of
+// the data. Designed to take multiple individuals with the possibility of
+// running multiple generations with an assigned fitness function. Can be ran
+// through each step or generation or ran through multiple generation at a time.
 //==============================================================================
 using System.Collections;
 using System.Collections.Generic;
@@ -12,7 +16,7 @@ using System.Threading.Tasks;
 using lmath;
 using statistics;
 
-namespace adl {
+namespace adl.genetics {
 public class GeneticAlgorithm {
 	public static int MAX_ATTEMPTS = 16;
 // VARIABLES
@@ -26,13 +30,13 @@ public class GeneticAlgorithm {
 	//Population Settings
 	public int populationCount;
 	public int eliteCount;
-	public Matrix minValueMatrix; //[UNIFORM]
-	public Matrix maxValueMatrix; //[UNIFORM]
-	public Matrix meanValueMatrix; //[GAUSSIAN]
-	public Matrix stdDevValueMatrix; //[GAUSSIAN]
+	public Vector minValueVector; //[UNIFORM]
+	public Vector maxValueVector; //[UNIFORM]
+	public Vector meanValueVector; //[GAUSSIAN]
+	public Vector stdDevValueVector; //[GAUSSIAN]
 
 	//Fitness Settings
-	public System.Func<Matrix, float> fitnessFunction;
+	public System.Func<Vector, float> fitnessFunction;
 	public Vector fitnessProportions;
 
 	//Crossover Settings
@@ -41,23 +45,23 @@ public class GeneticAlgorithm {
 
 	//Mutation Settings
 	public float mutationRate;
-	public Matrix minMutationMatrix; //[UNIFORM] //current value +/- mutation value
-	public Matrix maxMutationMatrix; //[UNIFORM] //min and maxes out at value matrices
-	public Matrix meanMutationMatrix; //[GAUSSIAN] //current value +/- mutation value
-	public Matrix stdDevMutationMatrix; //[GAUSSIAN] //min and maxes out at value matrices
+	public Vector minMutationVector; //[UNIFORM] //current value +/- mutation value
+	public Vector maxMutationVector; //[UNIFORM] //min and maxes out at value vectors
+	public Vector meanMutationVector; //[GAUSSIAN] //current value +/- mutation value
+	public Vector stdDevMutationVector; //[GAUSSIAN] //min and maxes out at value vectors
 
 // CONSTRUCTORS
 //------------------------------------------------------------------------------
 	public GeneticAlgorithm() {
 		distributionType = Distribution.Uniform;
 		populationCount = 0;
-		minValueMatrix = Matrix.Zeros(1, 1);
-		maxValueMatrix = Matrix.Zeros(1, 1);
+		minValueVector = Vector.Zeros(1);
+		maxValueVector = Vector.Zeros(1);
 		crossPoints = 1;
 		crossOffset = 0;
 		mutationRate = 0f;
-		minMutationMatrix = Matrix.Zeros(1, 1);
-		maxMutationMatrix = Matrix.Zeros(1, 1);
+		minMutationVector = Vector.Zeros(1);
+		maxMutationVector = Vector.Zeros(1);
 	}
 
 // ALGORITHM
@@ -86,9 +90,9 @@ public class GeneticAlgorithm {
 		fitnessProportions = Vector.Zeros(populationCount);
 		for(int i = 0; i < populationCount; i++) {
 			if(distributionType == Distribution.Uniform) {
-				population.Add(new Individual(Matrix.Random(minValueMatrix, maxValueMatrix)));
+				population.Add(new Individual(Vector.Random(minValueVector, maxValueVector)));
             } else if (distributionType == Distribution.Gaussian) {
-				population.Add(new Individual(Matrix.RandomN(meanValueMatrix, stdDevValueMatrix)));
+				population.Add(new Individual(Vector.RandomN(meanValueVector, stdDevValueVector)));
             }
 		}
 	}
@@ -238,28 +242,25 @@ public class GeneticAlgorithm {
 				if(distributionType == Distribution.Uniform) {
 					float minValue;
 					float maxValue;
-					if (minMutationMatrix.Norm() == 0f && maxMutationMatrix.Norm() == 0f)
-					{
-						minValue = minValueMatrix[i];
-						maxValue = maxValueMatrix[i];
+					if (minMutationVector.Norm() == 0f && maxMutationVector.Norm() == 0f) {
+						minValue = minValueVector[i];
+						maxValue = maxValueVector[i];
 					} else {
-						minValue = newPopulation[index].data[i] + minMutationMatrix[i];
-						if (minValue < minValueMatrix[i])
-						{
-							minValue = minValueMatrix[i];
+						minValue = newPopulation[index].data[i] + minMutationVector[i];
+						if (minValue < minValueVector[i]) {
+							minValue = minValueVector[i];
 						}
 
-						maxValue = newPopulation[index].data[i] + maxMutationMatrix[i];
-						if (maxValue > maxValueMatrix[i])
-						{
-							maxValue = maxValueMatrix[i];
+						maxValue = newPopulation[index].data[i] + maxMutationVector[i];
+						if (maxValue > maxValueVector[i]) {
+							maxValue = maxValueVector[i];
 						}
 					}
 
 					newPopulation[index].data[i] = Statistics.NextFloat(minValue, maxValue);
 				}
 			} else if (distributionType == Distribution.Gaussian) {
-				newPopulation[index].data[i] += Statistics.randomN(meanMutationMatrix[i], stdDevMutationMatrix[i]);
+				newPopulation[index].data[i] += Statistics.randomN(meanMutationVector[i], stdDevMutationVector[i]);
 			}
 		}
 	}
@@ -280,8 +281,8 @@ public class GeneticAlgorithm {
 
 // OPERATIONS
 //------------------------------------------------------------------------------
-	public Matrix[] GetPopulation() {
-		Matrix[] population = new Matrix[populationCount];
+	public Vector[] GetPopulation() {
+		Vector[] population = new Vector[populationCount];
 		for(int i = 0; i < populationCount; i++) {
 			population[i] = GetIndividual(i);
 		}
@@ -289,12 +290,12 @@ public class GeneticAlgorithm {
 		return population;
 	}
 
-	public Matrix GetIndividual(int i) {
-		return new Matrix(population[i].data);
+	public Vector GetIndividual(int i) {
+		return new Vector(population[i].data);
 	}
 
-	public Matrix[] GetBestFit(int n=1) {
-		Matrix[] candidates = new Matrix[n];
+	public Vector[] GetBestFit(int n=1) {
+		Vector[] candidates = new Vector[n];
 
 		for(int i = 0; i < n; i++) {
 			candidates[i] = GetIndividual(i);
@@ -316,16 +317,16 @@ public class GeneticAlgorithm {
 		string s = "";
 		s += "GENETIC ALGORITHM PRINTOUT";
 		s += "\n--------------------------------";
-		s += "\nminValueMatrix:\n\t";
-		s += minValueMatrix.ToString();
-		s += "\nmaxValueMatrix:\n\t";
-		s += maxValueMatrix.ToString();
+		s += "\nminValueVector:\n\t";
+		s += minValueVector.ToString();
+		s += "\nmaxValueVector:\n\t";
+		s += maxValueVector.ToString();
 		s += "\ncrossPoints:\t" + crossPoints.ToString();
 		s += "\ncrossPoints:\t" + crossOffset.ToString();
-		s += "\nminMutationMatrix:\n\t";
-		s += minMutationMatrix.ToString();
-		s += "\nmaxMutationMatrix:\n\t";
-		s += maxMutationMatrix.ToString();
+		s += "\nminMutationVector:\n\t";
+		s += minMutationVector.ToString();
+		s += "\nmaxMutationVector:\n\t";
+		s += maxMutationVector.ToString();
 		s += "\n--------------------------------";
 		s += "\npopulationCount:\t" + populationCount.ToString() + " total";
 		UnityEngine.MonoBehaviour.print(s);
@@ -346,24 +347,24 @@ public class GeneticAlgorithm {
 // HELPER FUNCTIONS
 //------------------------------------------------------------------------------
 	private class Individual {
-		public Matrix data;
+		public Vector data;
 		public float fitnessScore;
 
 		public Individual() { 
-			this.data = new Matrix();
+			this.data = new Vector();
 		}
 		
-		public Individual(Matrix data) {
-			this.data = new Matrix(data);
+		public Individual(Vector data) {
+			this.data = new Vector(data);
 			this.fitnessScore = 0;
         }
 
-		public Individual(Matrix data, float fitnessScore) {
-			this.data = new Matrix(data);
+		public Individual(Vector data, float fitnessScore) {
+			this.data = new Vector(data);
 			this.fitnessScore = fitnessScore;
 		}
 	}
 }
-}
+} //END namespace adl.genetics
 //==============================================================================
 //==============================================================================

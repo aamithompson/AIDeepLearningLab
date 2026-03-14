@@ -2,7 +2,7 @@
 // Filename: UAgentCognition.cs
 // Author: Aaron Thompson
 // Date Created: 5/4/2022
-// Last Updated: 2/5/2026
+// Last Updated: 3/6/2026
 //
 // Description:
 //==============================================================================
@@ -331,7 +331,7 @@ public class UAgentCognition : MonoBehaviour {
 		}
 	}
 
-	public void SetConfiguration(Matrix configuration) {
+	public void SetConfiguration(Vector configuration) {
 		if (network == null) {
 			InitializeNetwork();
 		}
@@ -406,6 +406,24 @@ public class UAgentCognition : MonoBehaviour {
 		return output;
     }
 
+	public FFNeuralNetwork GetNetwork() {
+		FFNeuralNetwork copy;
+		if(isFunctional) {
+			copy = new FFNeuralNetwork(inputSize, outputSize);
+            copy.AddLayer(ActivationFunctions.Sigmoid, -1, hLayerDepth, hLayerWidth);
+			for(int i = 0; i < copy.weights.Count; i++) {
+				copy.weights[i].Copy(network.weights[i]);
+			}
+
+			for(int i = 0; i < copy.biases.Count; i++) {
+				copy.biases[i].Copy(network.biases[i]);
+			}
+        } else {
+			copy = new FFNeuralNetwork();
+		}
+		return copy;
+	}
+
 	IEnumerator IECognition() {
         while(true) {
 			Process();
@@ -413,7 +431,7 @@ public class UAgentCognition : MonoBehaviour {
 
 			//Debug.Log(behaviorMap.Count);
 			//Debug.Log(categories.Count);
-			Debug.Log(ltcMap[bestCategory].ToString() + ", " + bestFunction.ToString() + ", " + bestIndex.ToString());
+			//Debug.Log(ltcMap[bestCategory].ToString() + ", " + bestFunction.ToString() + ", " + bestIndex.ToString());
 			//outputVector.Print();
 			v.Print();
 

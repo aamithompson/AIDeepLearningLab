@@ -2,7 +2,7 @@
 // Filename: EcoTrainer.cs
 // Author: Aaron Thompson
 // Date Created: 7/1/2022
-// Last Updated: 8/1/2022
+// Last Updated: 3/13/2026
 //
 // Description:
 //==============================================================================
@@ -12,6 +12,7 @@ using UnityEngine;
 using adl;
 using lmath;
 using statistics;
+using adl.genetics;
 //------------------------------------------------------------------------------
 [RequireComponent(typeof(EcoSpawnManager))]
 [RequireComponent(typeof(SpeciesManager))]
@@ -146,52 +147,52 @@ public class EcoTrainer : MonoBehaviour {
             }
 
             if(distributionType == Distribution.Uniform) {
-                geneAlgorithm[i].minValueMatrix = Matrix.Zeros(n, 1);
-                geneAlgorithm[i].maxValueMatrix = Matrix.Zeros(n, 1);
-                geneAlgorithm[i].minMutationMatrix = Matrix.Zeros(n, 1);
-                geneAlgorithm[i].maxMutationMatrix = Matrix.Zeros(n, 1);
-                geneAlgorithm[i].meanValueMatrix = new Matrix();
-                geneAlgorithm[i].stdDevValueMatrix = new Matrix();
-                geneAlgorithm[i].meanMutationMatrix = new Matrix();
-                geneAlgorithm[i].stdDevMutationMatrix = new Matrix();
+                geneAlgorithm[i].minValueVector = Vector.Zeros(n);
+                geneAlgorithm[i].maxValueVector = Vector.Zeros(n);
+                geneAlgorithm[i].minMutationVector = Vector.Zeros(n);
+                geneAlgorithm[i].maxMutationVector = Vector.Zeros(n);
+                geneAlgorithm[i].meanValueVector = new Vector();
+                geneAlgorithm[i].stdDevValueVector = new Vector();
+                geneAlgorithm[i].meanMutationVector = new Vector();
+                geneAlgorithm[i].stdDevMutationVector = new Vector();
 
                 for(int j = 0; j < nW; j++) {
-                    geneAlgorithm[i].minValueMatrix[j] = algoSettings[indexJ].minWeight;
-                    geneAlgorithm[i].maxValueMatrix[j] = algoSettings[indexJ].maxWeight;
-                    geneAlgorithm[i].minMutationMatrix[j] = algoSettings[indexJ].minWeightMutation;
-                    geneAlgorithm[i].maxMutationMatrix[j] = algoSettings[indexJ].maxWeightMutation;
+                    geneAlgorithm[i].minValueVector[j] = algoSettings[indexJ].minWeight;
+                    geneAlgorithm[i].maxValueVector[j] = algoSettings[indexJ].maxWeight;
+                    geneAlgorithm[i].minMutationVector[j] = algoSettings[indexJ].minWeightMutation;
+                    geneAlgorithm[i].maxMutationVector[j] = algoSettings[indexJ].maxWeightMutation;
                 }
 
                 for(int j = nW; j < n; j++) {
-                    geneAlgorithm[i].minValueMatrix[j] = algoSettings[indexJ].minBias;
-                    geneAlgorithm[i].maxValueMatrix[j] = algoSettings[indexJ].maxBias;
-                    geneAlgorithm[i].minMutationMatrix[j] = algoSettings[indexJ].minBiasMutation;
-                    geneAlgorithm[i].maxMutationMatrix[j] = algoSettings[indexJ].maxBiasMutation;
+                    geneAlgorithm[i].minValueVector[j] = algoSettings[indexJ].minBias;
+                    geneAlgorithm[i].maxValueVector[j] = algoSettings[indexJ].maxBias;
+                    geneAlgorithm[i].minMutationVector[j] = algoSettings[indexJ].minBiasMutation;
+                    geneAlgorithm[i].maxMutationVector[j] = algoSettings[indexJ].maxBiasMutation;
                 }
             }
 
             if(distributionType == Distribution.Gaussian) {
-                geneAlgorithm[i].minValueMatrix = new Matrix();
-                geneAlgorithm[i].maxValueMatrix = new Matrix();
-                geneAlgorithm[i].minMutationMatrix = new Matrix();
-                geneAlgorithm[i].maxMutationMatrix = new Matrix();
-                geneAlgorithm[i].meanValueMatrix = Matrix.Zeros(n, 1);
-                geneAlgorithm[i].stdDevValueMatrix = Matrix.Zeros(n, 1);
-                geneAlgorithm[i].meanMutationMatrix = Matrix.Zeros(n, 1);
-                geneAlgorithm[i].stdDevMutationMatrix = Matrix.Zeros(n, 1);
+                geneAlgorithm[i].minValueVector = new Vector();
+                geneAlgorithm[i].maxValueVector = new Vector();
+                geneAlgorithm[i].minMutationVector = new Vector();
+                geneAlgorithm[i].maxMutationVector = new Vector();
+                geneAlgorithm[i].meanValueVector = Vector.Zeros(n);
+                geneAlgorithm[i].stdDevValueVector = Vector.Zeros(n);
+                geneAlgorithm[i].meanMutationVector = Vector.Zeros(n);
+                geneAlgorithm[i].stdDevMutationVector = Vector.Zeros(n);
 
                 for(int j = 0; j < nW; j++) {
-                    geneAlgorithm[i].meanValueMatrix[j] = algoSettings[indexJ].minWeight;
-                    geneAlgorithm[i].stdDevValueMatrix[j] = algoSettings[indexJ].maxWeight;
-                    geneAlgorithm[i].meanMutationMatrix[j] = algoSettings[indexJ].minWeightMutation;
-                    geneAlgorithm[i].stdDevMutationMatrix[j] = algoSettings[indexJ].maxWeightMutation;
+                    geneAlgorithm[i].meanValueVector[j] = algoSettings[indexJ].minWeight;
+                    geneAlgorithm[i].stdDevValueVector[j] = algoSettings[indexJ].maxWeight;
+                    geneAlgorithm[i].meanMutationVector[j] = algoSettings[indexJ].minWeightMutation;
+                    geneAlgorithm[i].stdDevMutationVector[j] = algoSettings[indexJ].maxWeightMutation;
                 }
 
                 for(int j = nW; j < n; j++) {
-                    geneAlgorithm[i].meanValueMatrix[j] = algoSettings[indexJ].minBias;
-                    geneAlgorithm[i].stdDevValueMatrix[j] = algoSettings[indexJ].maxBias;
-                    geneAlgorithm[i].meanMutationMatrix[j] = algoSettings[indexJ].minBiasMutation;
-                    geneAlgorithm[i].stdDevMutationMatrix[j] = algoSettings[indexJ].maxBiasMutation;
+                    geneAlgorithm[i].meanValueVector[j] = algoSettings[indexJ].minBias;
+                    geneAlgorithm[i].stdDevValueVector[j] = algoSettings[indexJ].maxBias;
+                    geneAlgorithm[i].meanMutationVector[j] = algoSettings[indexJ].minBiasMutation;
+                    geneAlgorithm[i].stdDevMutationVector[j] = algoSettings[indexJ].maxBiasMutation;
                 }
             }
 
@@ -306,7 +307,7 @@ public class EcoTrainer : MonoBehaviour {
 
 // FITNESS FUNCTION
 //------------------------------------------------------------------------------
-    public float FitnessFunction(Matrix data) {
+    public float FitnessFunction(Vector data) {
         float score = scores[iSpec][iIndv];
         iIndv++;
         return score;

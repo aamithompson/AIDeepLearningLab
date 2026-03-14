@@ -2,7 +2,7 @@
 // Filename: EcoSpawnManager.cs
 // Author: Aaron Thompson
 // Date Created: 1/16/2022
-// Last Updated: 5/2/2022
+// Last Updated: 2/12/2026
 //
 // Description:
 // https://en.wikipedia.org/wiki/Polygon
@@ -47,7 +47,7 @@ public class EcoSpawnManager : MonoBehaviour {
             environObjects.Add(list);
         }
 
-        //SpawnPopulations();
+        SpawnPopulations();
         UpdateEnvironment(0);
     }
 

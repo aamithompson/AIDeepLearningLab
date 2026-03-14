@@ -105,6 +105,8 @@ public class SpeciesManager : MonoBehaviour {
 			foreach(Transform child in group) {
 				Destroy(child.gameObject);
 			}
+
+			Destroy(group.gameObject);
         }
     }
 

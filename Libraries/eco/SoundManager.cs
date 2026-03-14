@@ -6,19 +6,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class SoundManager : MonoBehaviour {
-    private List<SoundEvent> sounds;
-    public float updateDeltaTime = 0.25f;
-    private float lastUpdateTime = 0;
+    public List<SoundEvent> sounds;
+    public float updateDeltaTime = 0.125f;
 
     public void Awake() {
         sounds = new List<SoundEvent>();
-        lastUpdateTime = Time.time;
         StartCoroutine(IESounds());
     }
 
     IEnumerator IESounds() {
         while(true) {
-            lastUpdateTime = Time.time;
             for(int i = 0; i < sounds.Count; i++) {
                 sounds[i].sound.AddTime(updateDeltaTime);
                 if(sounds[i].sound.IsExpired) {
@@ -43,10 +40,11 @@ public class SoundManager : MonoBehaviour {
     public List<SoundEvent> GetSounds(Vector3 position, float maxDistance) {
         List<SoundEvent> result = new List<SoundEvent>();
 
+        float sqrMaxDistance = maxDistance * maxDistance;
         for(int i = 0; i < sounds.Count; i++) {
             Vector3 sPosition = sounds[i].position;
-            float distance = (position - sPosition).sqrMagnitude;
-            if(distance <= maxDistance * maxDistance) {
+            float sqrDistance = (position - sPosition).sqrMagnitude;
+            if(sqrDistance <= sqrMaxDistance) {
                 result.Add(sounds[i]);
             }
         }
@@ -55,6 +53,7 @@ public class SoundManager : MonoBehaviour {
     }
 }
 
+[System.Serializable]
 public class SoundEvent {
     public ESound sound;
     public Vector3 position;
