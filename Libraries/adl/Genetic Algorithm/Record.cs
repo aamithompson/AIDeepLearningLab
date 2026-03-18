@@ -2,7 +2,7 @@
 // Filename: Record.cs
 // Author: Aaron Thompson
 // Date Created: 3/14/2026
-// Last Updated: 3/16/2026
+// Last Updated: 3/18/2026
 //
 // Description: Data for fitness, parent/child relations, generations, etc.
 //==============================================================================
@@ -10,6 +10,9 @@ using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Linq;
+using statistics;
+using Newtonsoft.Json;
 
 namespace adl.genetics {
 public class Record {
@@ -49,10 +52,22 @@ public class Record {
 
     public Record(List<Genome> genomes, int generation=0) {
         this.genomes = new List<Genome>();
+        this.generation = generation;
         this.dateCreated = DateTime.Now;
         this.dateLastModified = DateTime.Now;
 
         SetGenomes(genomes);
+    }
+
+    public Record(Record record) {
+        this.genomes = new List<Genome>();
+        this.generation = record.GetGeneration();
+        this.dateCreated = record.GetDateCreated();
+
+        SetGenomes(genomes);
+        Sort();
+        UpdateStatistics();
+        this.dateLastModified = record.GetDateLastModified();
     }
 
 // GETTER(s)/SETTER(s)
@@ -133,6 +148,14 @@ public class Record {
         return stdDevFitness;
     }
 
+    public DateTime GetDateCreated() {
+        return dateCreated;
+    }
+
+    public DateTime GetDateLastModified() {
+        return dateLastModified;
+    }
+
     private int GetGenomeIndex(string id) {
         for(int i = 0; i < count; i++) {
             if(genomes[i].id == id) {
@@ -156,6 +179,7 @@ public class Record {
 
         sorted = false;
         updatedStatistics = false;
+        dateLastModified = DateTime.Now;
     }
 
     public void AddGenomes(List<Genome> genomes) {
@@ -170,6 +194,7 @@ public class Record {
             genomes.RemoveAt(index);
             count--;
             updatedStatistics = false;
+            dateLastModified = DateTime.Now;
         }
     }
 
@@ -177,16 +202,38 @@ public class Record {
         RemoveGenome(genome.id);
     }
 
-    public void RemoveGenomes(List<string> id) {
-
+    public void RemoveGenomes(List<string> ids) {
+        HashSet<string> set = new HashSet<string>(ids);
+        for(int i = 0; i < count; i++) {
+            if(set.Contains(genomes[i].id)) {
+                genomes.RemoveAt(i);
+                i--;
+                count--;
+                updatedStatistics = false;
+                dateLastModified = DateTime.Now;
+            }
+        }
     }
 
     public void RemoveGenomes(List<Genome> genomes) {
-
+        List<string> ids = genomes.Select(x => x.id).ToList();
+        RemoveGenomes(ids);
     }
 
     public void Clear() {
+        genomes.Clear();
 
+        count = 0;
+        generation = 0;
+        maxFitness = 0;
+        minFitness = 0;
+        avgFitness = 0;
+        medianFitness = 0;
+        stdDevFitness = 0;
+
+        dateLastModified = DateTime.Now;
+        sorted = true;
+        updatedStatistics = true;
     }
 
     public bool HasGenome(Genome genome) {
@@ -197,19 +244,86 @@ public class Record {
         return GetGenomeIndex(id) != -1;
     }
 
-    //Needs Implementation
     private void Sort() {
         if(!sorted) {
+            genomes = genomes.OrderByDescending(g => g.fitness).ToList();
             sorted = true;
+            dateLastModified = DateTime.Now;
         }
     }
+
+    public string EncodeData(){
+        Sort();
+        UpdateStatistics();
+
+        var obj = new {
+            generation = generation,
+            count = count,
+            maxFitness = maxFitness,
+            minFitness = minFitness,
+            avgFitness = avgFitness,
+            medianFitness = medianFitness,
+            stdDevFitness = stdDevFitness,
+            dateCreated = dateCreated,
+            dateLastModified = dateLastModified,
+            genomes = genomes.Select(g => JsonConvert.DeserializeObject(g.EncodeData())).ToList()
+        };
+
+        return JsonConvert.SerializeObject(obj, Formatting.Indented);
+    }
+
+    public void DecodeData(string json) {
+        var obj = JsonConvert.DeserializeObject<RecordData>(json);
+
+        List<Genome> decoded = new List<Genome>();
+        foreach(string genomeJson in obj.genomes) {
+            Genome genome = new Genome();
+            genome.DecodeData(genomeJson);
+            decoded.Add(genome);
+        }
+        SetGenomes(decoded);
+
+        generation = obj.generation;
+
+        maxFitness = obj.maxFitness;
+        minFitness = obj.minFitness;
+        avgFitness = obj.avgFitness;
+        medianFitness = obj.medianFitness;
+        stdDevFitness = obj.stdDevFitness;
+        dateCreated = obj.dateCreated;
+        dateLastModified = obj.dateLastModified;
+
+        updatedStatistics = true;
+        sorted = true;
+    }
+
 // STATISTIC FUNCTION(s)
 //------------------------------------------------------------------------------ 
-    //Needs Implementation
     private void UpdateStatistics() {
         if(!updatedStatistics) {
+            List<float> fitnesses = genomes.Select(g => g.fitness).ToList();
+            maxFitness = Statistics.Max(fitnesses);
+            minFitness = Statistics.Min(fitnesses);
+            avgFitness = Statistics.Mean(fitnesses);
+            medianFitness = Statistics.Median(fitnesses);
+            stdDevFitness = Statistics.StandardDeviation(fitnesses);
             updatedStatistics = true;
+            dateLastModified = DateTime.Now;
         }
+    }
+// HELPER CLASSES
+//------------------------------------------------------------------------------
+    private class RecordData {
+        public int generation { get; set; }
+        public int count { get; set; }
+        public float maxFitness { get; set; }
+        public float minFitness { get; set; }
+        public float avgFitness { get; set; }
+        public float medianFitness { get; set; }
+        public float stdDevFitness { get; set; }
+        public DateTime dateCreated { get; set; }
+        public DateTime dateLastModified { get; set; }
+        public List<string> genomes { get; set; }
     }
 }
 } //END namespace adl.genetics
