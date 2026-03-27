@@ -32,22 +32,30 @@ public class PathRequestManager : MonoBehaviour {
 
 // REQUEST FUNCTIONS
 //------------------------------------------------------------------------------
-    public static void RequestPath(Vector3 start, Vector3 end, float[] maxHeightDelta, Action<Vector3[], bool> callback) {
-        PathRequest request = new PathRequest(start, end, maxHeightDelta, callback);
+    public static void RequestPath(Vector3 start, Vector3 end, float[] maxHeightDelta, int maxNodes, Action<Vector3[], bool> callback) {
+        PathRequest request = new PathRequest(start, end, maxHeightDelta, maxNodes, callback);
         instance.requestQueue.Enqueue(request);
         instance.TryProcessNext();
     }
 
-    public static void RequestPath(Vector3 start, Vector3 end, float maxHeightDelta, Action<Vector3[], bool> callback) {
+    public static void RequestPath(Vector3 start, Vector3 end, float[] maxHeightDelta, Action<Vector3[], bool> callback) {
+        RequestPath(start, end, maxHeightDelta, -1, callback);
+    }
+
+    public static void RequestPath(Vector3 start, Vector3 end, float maxHeightDelta, int maxNodes, Action<Vector3[], bool> callback) {
         float[] maxHeightDeltaArray = { maxHeightDelta };
-        RequestPath(start, end, maxHeightDeltaArray, callback);
+        RequestPath(start, end, maxHeightDeltaArray, maxNodes, callback);
+    }
+
+    public static void RequestPath(Vector3 start, Vector3 end, float maxHeightDelta, Action<Vector3[], bool> callback) {
+        RequestPath(start, end, maxHeightDelta, -1, callback);
     }
 
     private void TryProcessNext() {
         if(!isProcessing && requestQueue.Count > 0) {
             currentRequest = requestQueue.Dequeue();
             isProcessing = true;
-            pathfinding.StartFindPath(currentRequest.start, currentRequest.end, currentRequest.maxHeightDelta);
+            pathfinding.StartFindPath(currentRequest.start, currentRequest.end, currentRequest.maxHeightDelta, currentRequest.maxNodes);
         }
     }
 
@@ -61,12 +69,14 @@ public class PathRequestManager : MonoBehaviour {
         public Vector3 start;
         public Vector3 end;
         public float[] maxHeightDelta;
+        public int maxNodes;
         public Action<Vector3[], bool> callback;
 
-        public PathRequest(Vector3 start, Vector3 end, float[] maxHeightDelta, Action<Vector3[], bool> callback) {
+        public PathRequest(Vector3 start, Vector3 end, float[] maxHeightDelta, int maxNodes, Action<Vector3[], bool> callback) {
             this.start = start;
             this.end = end;
             this.maxHeightDelta = maxHeightDelta;
+            this.maxNodes = maxNodes;
             this.callback = callback;
         }
     }

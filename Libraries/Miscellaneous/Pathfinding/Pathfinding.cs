@@ -43,12 +43,12 @@ public class Pathfinding : MonoBehaviour {
 //------------------------------------------------------------------------------
     //Dijkstra's Search Algorithm
     //https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
-    private bool Dijkstra(PathNode startNode, PathNode targetNode, float[] maxHeightDelta) {
+    private bool Dijkstra(PathNode startNode, PathNode targetNode, float[] maxHeightDelta, int maxNodes=-1) {
         Heap<PathNode> open = new Heap<PathNode>(grid.length);
         HashSet<PathNode> closed = new HashSet<PathNode>();
 
         open.Push(startNode);
-        while(open.Count > 0) {
+        while(open.Count > 0 && (closed.Count <= maxNodes || maxNodes <= 0)) {
             PathNode currentNode = open.Pop();
             closed.Add(currentNode);
 
@@ -89,12 +89,12 @@ public class Pathfinding : MonoBehaviour {
 
     //A* Search Algorithm
     //https://en.wikipedia.org/wiki/A*_search_algorithm
-    private bool AStar(PathNode startNode, PathNode targetNode, float[] maxHeightDelta) {
+    private bool AStar(PathNode startNode, PathNode targetNode, float[] maxHeightDelta, int maxNodes=-1) {
         Heap<PathNode> open = new Heap<PathNode>(grid.length);
         HashSet<PathNode> closed = new HashSet<PathNode>();
 
         open.Push(startNode);
-        while(open.Count > 0) {
+        while(open.Count > 0 && (closed.Count < maxNodes || maxNodes <= 0)) {
             PathNode currentNode = open.Pop();
             closed.Add(currentNode);
 
@@ -132,12 +132,12 @@ public class Pathfinding : MonoBehaviour {
         return false;
     }
 
-    private bool Greedy(PathNode startNode, PathNode targetNode, float[] maxHeightDelta) {
+    private bool Greedy(PathNode startNode, PathNode targetNode, float[] maxHeightDelta, int maxNodes=-1) {
         Heap<PathNode> open = new Heap<PathNode>(grid.length);
         HashSet<PathNode> closed = new HashSet<PathNode>();
 
         open.Push(startNode);
-        while(open.Count > 0) {
+        while(open.Count > 0 && (closed.Count < maxNodes || maxNodes <= 0)) {
             PathNode currentNode = open.Pop();
             closed.Add(currentNode);
 
@@ -169,31 +169,31 @@ public class Pathfinding : MonoBehaviour {
 
     //D* Search Algorithm (Dynamic A*)
     //https://en.wikipedia.org/wiki/D*
-    private bool DStar(PathNode startNode, PathNode targetNode, float[] maxHeightDelta) {
+    private bool DStar(PathNode startNode, PathNode targetNode, float[] maxHeightDelta, int maxNodes=-1) {
         return false;
     }
 
     //D* Focused Search Algorithm
-    private bool DStarFocused(PathNode startNode, PathNode targetNode, float[] maxHeightDelta) {
+    private bool DStarFocused(PathNode startNode, PathNode targetNode, float[] maxHeightDelta, int maxNodes=-1) {
         return false;
     }
 
     //D* Lite Search Algorithm
-    private bool DStarLite(PathNode startNode, PathNode targetNode, float[] maxHeightDelta) {
+    private bool DStarLite(PathNode startNode, PathNode targetNode, float[] maxHeightDelta, int maxNodes=-1) {
         return false;
     }
 
 // PATH FUNCTIONS
 //------------------------------------------------------------------------------
-public void StartFindPath(Vector3 start, Vector3 target, float[] maxHeightDelta) {
+public void StartFindPath(Vector3 start, Vector3 target, float[] maxHeightDelta, int maxNodes=-1) {
         StartCoroutine(FindPath(start, target, maxHeightDelta));
     }
-    public void StartFindPath(Vector3 start, Vector3 target, float maxHeightDelta=-1) {
+    public void StartFindPath(Vector3 start, Vector3 target, float maxHeightDelta=-1, int maxNodes=-1) {
         float[] maxHeightDeltaArray = { maxHeightDelta };
         StartFindPath(start, target, maxHeightDeltaArray);
     }
 
-    private IEnumerator FindPath(Vector3 start, Vector3 target, float[] maxHeightDelta) {
+    private IEnumerator FindPath(Vector3 start, Vector3 target, float[] maxHeightDelta, int maxNodes=-1) {
         Vector3[] path = new Vector3[0];
         bool success = false;
         PathNode startNode = grid.GetNode(start);

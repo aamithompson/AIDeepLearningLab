@@ -9,6 +9,9 @@
 //==============================================================================
 using System;
 using System.Collections.Generic;
+using Codice.Client.BaseCommands;
+using Newtonsoft.Json;
+using UnityEngine.XR;
 
 namespace adl.genetics {
 public class Population{
@@ -44,8 +47,8 @@ public class Population{
         gCount = 0;
         rCount = 0;
 
-        SetGenomes(genomes);
-        SetHistory(history);
+        SetGenomes(population.GetGenomes());
+        SetHistory(population.GetHistory());
     }
 
 // GETTER/SETTER FUNCTION(s)
@@ -86,7 +89,7 @@ public class Population{
     }
 
     public void SetGenomes(List<Genome> genomes) {
-        genomes.Clear();
+        this.genomes.Clear();
 
         for(int i = 0; i < genomes.Count; i++) {
             AddGenome(genomes[i]);
@@ -123,7 +126,7 @@ public class Population{
     }
 
     private void SetHistory(List<Record> history) {
-        history.Clear();
+        this.history.Clear();
 
         for(int i = 0; i < history.Count; i++) {
             this.history.Add(new Record(history[i]));
@@ -174,30 +177,89 @@ public class Population{
 // GENERATION FUNCTION(s)
 //------------------------------------------------------------------------------
     //Records current generation with history then clears current genomes.
-    public void NewGeneration(string path="", bool write=false, bool replace=false) {
+    public void NewGeneration(string path="", bool write=false) {
+        int generation = (rCount > 0) ? GetRecord(-1).GetGeneration() + 1 : 1;
+        Record record = new Record(genomes, generation);
 
+        rCount++;
+        history.Add(record);
+        rCount++;
+        if(write) {
+            WriteRecord(path, -1);
+        }
+
+        genomes.Clear();
+        gCount = 0;
     }
 
-    public void NewGeneration(List<Genome> genomes, string path="", bool replace=false) {
+    public void NewGeneration(List<Genome> newGenomes, string path="", bool write=false) {
+        int generation = (rCount > 0) ? GetRecord(-1).GetGeneration() + 1 : 1;
+        Record record = new Record(genomes, generation);
 
+        history.Add(record);
+        rCount++;
+        if(write) {
+            WriteRecord(path, -1);
+        }
+
+        genomes.Clear();
+        gCount = 0;
+        SetGenomes(newGenomes);
     }
 
 // FILE FUNCTION(s)
 //------------------------------------------------------------------------------
-    public void WriteRecord(string path, int i=-1, bool replace=false) {
+    public void WriteRecord(string path, int index=-1) {
+        if(index < 0) {
+            index = history.Count + index;
+        }
 
-    }
+        string rJson = history[index].EncodeData();
+        
+        List<object> records;
+        if(System.IO.File.Exists(path)) {
+            string s = System.IO.File.ReadAllText(path);
+            records = JsonConvert.DeserializeObject<List<object>>(s);
+        } else {
+            records = new List<object>();
+        }
 
-    public void ReadRecord(string path) {
-
+        records.Add(JsonConvert.DeserializeObject(rJson));
+        System.IO.File.WriteAllText(path, JsonConvert.SerializeObject(records, Formatting.Indented));
     }
 
     public void WriteHistory(string path, bool replace=false) {
+        List<string> rJsons = new List<string>();
+        for(int i = 0; i < rCount; i++) {
+            rJsons.Add(history[i].EncodeData());
+        }
 
+        List<object> records;
+        if(!replace && System.IO.File.Exists(path)) {
+            string s = System.IO.File.ReadAllText(path);
+            records = JsonConvert.DeserializeObject<List<object>>(s);
+        } else {
+            records = new List<object>();
+        }
+
+        for(int i = 0; i < rCount; i++) {
+            records.Add(JsonConvert.DeserializeObject(rJsons[i]));
+        }
+
+        System.IO.File.WriteAllText(path, JsonConvert.SerializeObject(records, Formatting.Indented));
     }
 
     public void ReadHistory(string path) {
+        string s = System.IO.File.ReadAllText(path);
+        List<object> rJsons = JsonConvert.DeserializeObject<List<object>>(s);
+        List<Record> records = new List<Record>();
+        for(int i = 0; i < rJsons.Count; i++) {
+            Record record = new Record();
+            record.DecodeData(JsonConvert.SerializeObject(rJsons[i]));
+            records.Add(record);
+        }
 
+        SetHistory(records);
     }
 }
 } //END namespace adl.genetics

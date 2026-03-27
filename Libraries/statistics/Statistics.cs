@@ -2,10 +2,12 @@
 // Filename: Statistics.cs
 // Author: Aaron Thompson
 // Date Created: 7/20/2021
-// Last Updated: 9/11/2025
+// Last Updated: 3/17/2026
 //
-// Description:
+// Description: Written to help with calculations for boolean categorization,
+// and floating type stastical calculations.
 //==============================================================================
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using lmath;
@@ -117,6 +119,84 @@ public static class Statistics {
         float precision = Precision(yData, yTarget);
         float recall = Recall(yData, yTarget);
         return (precision * recall)/((B * B) * precision + recall);
+    }
+
+// FLOATING POINT
+//------------------------------------------------------------------------------
+    public static float Mean(List<float> values) {
+        int n = values.Count;
+        if(n == 0) {
+            return 0;
+        }
+
+        float result = 0;
+        for(int i = 0; i < n; i++) {
+            result += values[i];
+        }
+
+        return result/n;
+    }
+
+    public static float Median(List<float> values) {
+        int n = values.Count;
+        if(n == 0) {
+            return 0;
+        }
+
+        values.Sort();
+        if(n % 2 == 0) {
+            float a = values[(n/2) - 1];
+            float b = values[n/2];
+            return (a + b)/2;
+        }
+
+        return values[n/2];
+    }
+
+    public static float StandardDeviation(List<float> values) {
+        int n = values.Count;
+        if(n == 0) {
+            return 0;
+        }
+
+        List<float> sqrV = new List<float>(n);
+        float mean = Mean(values);
+        for(int i = 0; i < n; i++) {
+                float variance = values[i] - mean;
+                sqrV.Add(variance * variance);
+        }
+
+        float meanSqrV = Mean(sqrV);
+
+        return MathF.Sqrt(meanSqrV);
+    }
+
+    public static float Max(List<float> values) {
+        int n = values.Count;
+        if(n == 0) {
+            return 0;
+        }
+
+        float max = float.MinValue;
+        for(int i = 0; i < n; i++) {
+            max = MathF.Max(max, values[i]);
+        }
+
+        return max;
+    }
+
+    public static float Min(List<float> values) {
+        int n = values.Count;
+        if(n == 0) {
+            return 0;
+        }
+
+        float min = float.MaxValue;
+        for(int i = 0; i < n; i++) {
+            min = MathF.Min(min, values[i]);
+        }
+
+        return min;
     }
 
     //Approximation for the Error Function erf(x) by Abramowitz & Stegun, formula 7.1.26
