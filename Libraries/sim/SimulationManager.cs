@@ -1,16 +1,19 @@
 //==============================================================================
-// Filename: EcoTrainer.cs
+// Filename: SimulationManager.cs
 // Author: Aaron Thompson
 // Date Created: 7/1/2022
-// Last Updated: 8/1/2022
+// Last Updated: 3/24/2026
 //
-// Description:
+// Description: Designed to handle management of running simulations of agents.
+// Helps with glueing together configuarion settings, ecosystems settings, agents,
+// and more to provide experimental controls and data.
 //==============================================================================
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 //------------------------------------------------------------------------------
-public class SimulationManager : MonoBehaviour {
+public class SimulationManager : MonoBehaviour
+{
 // VARIABLES
 //------------------------------------------------------------------------------
     public bool running;
@@ -18,31 +21,46 @@ public class SimulationManager : MonoBehaviour {
     public int currentSession;
 
     //Components
+    public SimulationConfig simulationConfig;
+    public SimulationPlayButton playButton;
+    public SimulationPauseButton pauseButton;
+    public SimulationStopButton stopButton;
+
     public EcoTrainer trainer;
+    public EcoSpawnManager spawnManager;
+    public EnvironmentManager environmentManager;
+    public SoundManager soundManager;
+    public SpeciesManager speciesManager;
+    public Pathfinding pathfinding;
+    public PathGrid pathGrid;
+    public AgentUICore agentUICore;
+
 
     //Settings
     public float sessionTimeLength;
     public int numberOfSessions;
 
-// MONOBEHAVIOR FUNCTIONS
+// MONOBEHAVIOR FUNCTION(s)
 //------------------------------------------------------------------------------
     void Start() {
-        
+        playButton.simulationManager = this;
+        pauseButton.simulationManager = this;
+        stopButton.simulationManager = this;
     }
 
-    void Update() {
-        if(running) {
-            currentSessionTime += Time.deltaTime;
+    
+// TIME FUNCTION(s)
+//------------------------------------------------------------------------------
+    public void Resume() {
+        Time.timeScale = 1.0f;
+    }
 
-            if(currentSessionTime >= sessionTimeLength) {
-                currentSessionTime = 0;
-                currentSession++;
+    public void Pause() {
+        Time.timeScale = 0.0f;
+    }
 
-                if (currentSession >= numberOfSessions) {
-                    running = false;
-                }
-            }
-        } 
+    public void Stop() {
+
     }
 }
 //==============================================================================

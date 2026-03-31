@@ -1,16 +1,9 @@
 using UnityEngine;
 
-public class SimulationPauseButton : MonoBehaviour
-{
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+public class SimulationPauseButton : MonoBehaviour {
+    public SimulationManager simulationManager;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    public void Pause() {
+        simulationManager.Pause();
     }
 }

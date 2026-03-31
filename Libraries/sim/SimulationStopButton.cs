@@ -1,16 +1,9 @@
 using UnityEngine;
 
-public class SimulationStopButton : MonoBehaviour
-{
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+public class SimulationStopButton : MonoBehaviour {
+    public SimulationManager simulationManager;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    public void Stop() {
+        simulationManager.Stop();
     }
 }
