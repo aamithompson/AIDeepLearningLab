@@ -148,8 +148,13 @@ public class AgentUICore : MonoBehaviour {
     private void HighlightOver() {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit)) {
+        if(Physics.Raycast(ray, out hit)) {
             GameObject gameObject = hit.collider.gameObject;
+            if(gameObjectMO != null && gameObject != gameObjectMO) {
+                gameObjectMO.layer = dLNum;
+                gameObjectMO = null;
+            }
+
             if (gameObject.GetComponent<UAgentCore>() != null && gameObject.layer == dLNum && gameObject != gameObjectMO && gameObject != Agent) {
                 if(gameObjectMO != null && gameObjectMO != Agent) {
                     gameObjectMO.layer = dLNum;
@@ -163,6 +168,9 @@ public class AgentUICore : MonoBehaviour {
                     gameObjectMO = null;
                 }
             }*/
+        } else if(gameObjectMO != null) {
+            gameObjectMO.layer = dLNum;
+            gameObjectMO = null;
         }
     }
 
@@ -176,6 +184,8 @@ public class AgentUICore : MonoBehaviour {
                     if (Agent != null) {
                         Agent.layer = dLNum;
                     }
+
+                    gameObjectMO = null;
 
                     gameObject.layer = hLNum;
                     Agent = gameObject;
