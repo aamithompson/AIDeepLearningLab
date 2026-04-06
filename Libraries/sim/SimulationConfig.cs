@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using TMPro;
 using adl.genetics;
 using UnityEngine.UI;
+using statistics;
 //------------------------------------------------------------------------------
 public class SimulationConfig : MonoBehaviour {
 // VARIABLES (BASE)
@@ -45,8 +46,8 @@ public class SimulationConfig : MonoBehaviour {
     public bool showHearingCones;
     public bool showSoundEvents;
 
-    // VARIABLES (UI)
-    //------------------------------------------------------------------------------
+// VARIABLES (UI)
+//------------------------------------------------------------------------------
     public Button backButton;
     public Button acceptButton;
 
@@ -134,10 +135,78 @@ public class SimulationConfig : MonoBehaviour {
     }
 
     public void LoadFromRealtimeConfig() {
+        //Populations
         for(int i = 0; i < _SPECIESCOUNT; i++) {
             populationCounts[i] = int.Parse(populationCountTMPs[i].text);
             populationRecordFolders[i] = populationRecordFoldersTMPs[i].text;
             populationRecordFileNames[i] = populationRecordFileNamesTMPs[i].text;
         }
+
+        //Genetic Algorithms
+        for(int i = 0; i < _SPECIESCOUNT + 1;  i++) {
+            Distribution distribution = statistics.Distribution.Uniform;
+            switch(distributionTypeTMPDrops[i].value) {
+                case 0:
+                   distribution = statistics.Distribution.Uniform;
+                    break;
+                case 1:
+                    distribution = statistics.Distribution.Gaussian;
+                    break;
+            }
+
+            speciesAlgorithmSettings[i] = new EcoTrainer.SpeciesAlgorithmSettings {
+                speciesName = "",
+                distributionType = distribution,
+                minWeight = float.Parse(minWeightTMPs[i].text),
+                maxWeight = float.Parse(maxWeightTMPs[i].text),
+                meanWeight = 0.0f,
+                stdDevWeight = 0.0f,
+
+                minBias = float.Parse(minBiasTMPs[i].text),
+                maxBias = float.Parse(maxBiasTMPs[i].text),
+                meanBias = 0.0f,
+                stdDevBias = 0.0f,
+
+                minWeightMutation = float.Parse(minWeightMutationTMPs[i].text),
+                maxWeightMutation = float.Parse(maxWeightMutationTMPs[i].text),
+                meanWeightMutation = 0.0f,
+                stdDevWeightMutation = 0.0f,
+
+                minBiasMutation = float.Parse(minBiasMutationTMPs[i].text),
+                maxBiasMutation = float.Parse(maxBiasMutationTMPs[i].text),
+                meanBiasMutation = 0.0f,
+                stdDevBiasMuation = 0.0f
+            };
+        }
+
+        //Ecosystem
+        waterPointRadius = float.Parse(waterPointRadiusTMP.text);
+        waterPointMaxDistance = float.Parse(waterPointMaxDistanceTMP.text);
+
+        //Pathfinding Algorithm
+        PathfindingAlgorithm algorithm = PathfindingAlgorithm.AStar;
+        switch(pathfindingAlgorithmTMPDrop.value) {
+            case 0:
+                algorithm = PathfindingAlgorithm.Dijkstra; 
+                break;
+            case 1:
+                algorithm = PathfindingAlgorithm.Greedy;
+                break;
+            case 2:
+                algorithm = PathfindingAlgorithm.AStar;
+                break;
+            case 3:
+                algorithm = PathfindingAlgorithm.DStar;
+                break;
+            case 4:
+                algorithm = PathfindingAlgorithm.DStarFocused;
+                break;
+            case 5:
+                algorithm = PathfindingAlgorithm.DStarLite;
+                break;
+        }
+        pathfindingAlgorithm = algorithm;
+        pathfindingTileRadius = float.Parse(pathfindingTileRadiusTMP.text);
+        pathfindingTileHeight = float.Parse(pathfindingTileHeightTMP.text);
     }
 }
