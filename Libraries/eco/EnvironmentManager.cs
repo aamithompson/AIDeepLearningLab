@@ -101,7 +101,7 @@ public class EnvironmentManager : MonoBehaviour {
     }*/
 
     //Marching Squares
-    private void GenerateWaterPoints(){
+    public void GenerateWaterPoints(){
         List<Vector3> results = new List<Vector3>();
         //Lookup Table: (Case, Rotations)
         //Cases: 0 = empty, 1 = corner, 2 = edge, 3 = saddle
